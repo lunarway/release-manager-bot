@@ -24,10 +24,9 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	var event github.PullRequestEvent
 
 	if err := json.Unmarshal(payload, &event); err != nil {
+		fmt.Printf("%s", payload)
 		return errors.Wrap(err, "failed to parse pull request event payload")
 	}
-
-	// Måske lave flere checks?
 
 	repository := event.GetRepo()
 	prNum := event.GetNumber()
@@ -35,7 +34,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	ctx, logger := githubapp.PreparePRContext(ctx, installationID, repository, prNum)
 
-	client, err := handler.NewInstallationClient(installationID)
+	/*client, err := handler.NewInstallationClient(installationID)
 	if err != nil {
 		return err
 	}
@@ -50,7 +49,8 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, &newComment); err != nil {
 		logger.Error().Err(err).Msg("Failed to comment on pull request")
-	}
+	} */
+	logger.Print("test")
 
 	return nil
 }
