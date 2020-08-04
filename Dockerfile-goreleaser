@@ -1,0 +1,9 @@
+FROM alpine:3.12.0
+
+RUN   apk update && \
+      apk add --no-cache \
+      ca-certificates
+
+ENTRYPOINT [ "/release-manager-bot" ]
+
+COPY release-manager-bot /
