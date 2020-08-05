@@ -39,11 +39,11 @@ func ReadConfig(path string) (*Config, error) {
 
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed reading server config file: %s", path)
+		return nil, errors.Wrapf(err, "reading server config file")
 	}
 
 	if err := yaml.UnmarshalStrict(bytes, &c); err != nil {
-		return nil, errors.Wrap(err, "failed parsing configuration file")
+		return nil, errors.Wrap(err, "parsing configuration file as yaml")
 	}
 
 	return &c, nil

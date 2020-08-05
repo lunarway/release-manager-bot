@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/palantir/go-githubapp/githubapp"
@@ -24,8 +23,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	var event github.PullRequestEvent
 
 	if err := json.Unmarshal(payload, &event); err != nil {
-		fmt.Printf("%s", payload)
-		return errors.Wrap(err, "failed to parse pull request event payload")
+		return errors.Wrap(err, "parsing payload")
 	}
 
 	repository := event.GetRepo()
@@ -39,9 +37,9 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		return nil
 	}
 
-	client, err := handler.NewInstallationClient(installationID)
+	/*client, err := handler.NewInstallationClient(installationID)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "installing client")
 	}
 
 	repositoryOwner := repository.GetOwner().GetLogin()
@@ -54,8 +52,8 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, &newComment); err != nil {
 		logger.Error().Err(err).Msg("Failed to comment on pull request")
-	}
-	logger.Print(event.PullRequest)
+	}*/
+	logger.Print(event)
 
 	return nil
 }
