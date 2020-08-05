@@ -34,7 +34,12 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	ctx, logger := githubapp.PreparePRContext(ctx, installationID, repository, prNum)
 
-	/*client, err := handler.NewInstallationClient(installationID)
+	logger.Debug().Msgf("Event action is %s", event.GetAction())
+	if event.GetAction() != "created" {
+		return nil
+	}
+
+	client, err := handler.NewInstallationClient(installationID)
 	if err != nil {
 		return err
 	}
@@ -49,8 +54,8 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, &newComment); err != nil {
 		logger.Error().Err(err).Msg("Failed to comment on pull request")
-	} */
-	logger.Print("test")
+	}
+	logger.Print(event.PullRequest)
 
 	return nil
 }

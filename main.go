@@ -13,19 +13,23 @@ import (
 
 func main() {
 
+	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+
 	config, err := ReadConfig("config.yml")
 	if err != nil {
-		panic(err)
+		logger.Error().Msgf("Failed to parse config: %v", err)
+		os.Exit(1)
+		return
 	}
-
-	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
 	server, err := baseapp.NewServer(
 		config.Server,
 		baseapp.DefaultParams(logger, "exampleapp.")...,
 	)
 	if err != nil {
-		panic(err)
+		logger.Error().Msgf("Failed to instatiate http server: %v", err)
+		os.Exit(1)
+		return
 	}
 
 	cc, err := githubapp.NewDefaultCachingClientCreator(
@@ -38,7 +42,9 @@ func main() {
 		),
 	)
 	if err != nil {
-		panic(err)
+		logger.Error().Msgf("Failed to instatiate Github client: %v", err)
+		os.Exit(1)
+		return
 	}
 
 	pullRequestHandler := &PRCreateHandler{
@@ -53,7 +59,9 @@ func main() {
 	// Start is blocking
 	err = server.Start()
 	if err != nil {
-		panic(err)
+		logger.Error().Msgf("Failed to serve: %v", err)
+		os.Exit(1)
+		return
 	}
 
 }
