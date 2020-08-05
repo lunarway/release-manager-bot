@@ -4,7 +4,7 @@
 builds:
   - binary: release-manager-bot
     id: release-manager-bot
-    main: ./main.go
+    main: .
     goarch:
     - amd64
     goos:
