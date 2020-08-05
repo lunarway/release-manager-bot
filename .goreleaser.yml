@@ -13,37 +13,37 @@ builds:
     env:
       - CGO_ENABLED=0
 
-  dockers:
-    - dockerfile: Dockerfile-goreleaser
-      binaries:
-      - release-manager-bot
-      image_templates:
-      - "quay.io/lunarway/release-manager-bot:{{ .Tag }}"
+dockers:
+  - dockerfile: Dockerfile-goreleaser
+    binaries:
+    - release-manager-bot
+    image_templates:
+    - "quay.io/lunarway/release-manager-bot:{{ .Tag }}"
 
-  archives:
-    - id: archives
-      format: binary
-      name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}"
-      replacements:
-        darwin: darwin
-        linux: linux
-        windows: windows
-        386: i386
+archives:
+  - id: archives
+    format: binary
+    name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}"
+    replacements:
+      darwin: darwin
+      linux: linux
+      windows: windows
+      386: i386
 
 
-  checksum:
-    name_template: '{{ .ProjectName }}-checksums.txt'
+checksum:
+  name_template: '{{ .ProjectName }}-checksums.txt'
 
-  snapshot:
-    name_template: "git-{{.Commit}}"
+snapshot:
+  name_template: "git-{{.Commit}}"
 
-  release:
-    name_template: "v{{.Version}}"
-    prerelease: auto
+release:
+  name_template: "v{{.Version}}"
+  prerelease: auto
 
-  changelog:
-    sort: asc
-    filters:
-      exclude:
-      - '^docs:'
-      - '^test:'
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
