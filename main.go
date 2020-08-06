@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"time"
 
@@ -13,9 +14,12 @@ import (
 
 func main() {
 
+	configPath := flag.String("config-path", "config.yml", "path to configuration file")
+	flag.Parse()
+
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
-	config, err := ReadConfig("config.yml")
+	config, err := ReadConfig(*configPath)
 	if err != nil {
 		logger.Error().Msgf("Failed to parse config: %v", err)
 		os.Exit(1)
