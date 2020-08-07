@@ -67,7 +67,7 @@ func main() {
 
 	webhookHandler := githubapp.NewDefaultEventDispatcher(config.Github, pullRequestHandler)
 
-	server.Mux().Handle(pat.Post("/webhook/github"), webhookHandler)
+	server.Mux().Handle(pat.Post("/webhook/github/bot"), webhookHandler)
 
 	// Start is blocking
 	err = server.Start()
