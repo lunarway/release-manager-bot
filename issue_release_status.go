@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/palantir/go-githubapp/githubapp"
@@ -64,6 +65,8 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	// Retrieve auto-release-policy
 
 	serviceName := event.GetRepo().GetName()
+	serviceName = strings.TrimSuffix(serviceName, "-service")
+	serviceName = strings.TrimPrefix(serviceName, "lunar-war-")
 	servicePath := handler.releaseManagerURL + "/policies?service="
 
 	// Create client
