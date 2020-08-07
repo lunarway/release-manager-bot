@@ -76,7 +76,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	req, err := http.NewRequest("GET", servicePath+serviceName, nil) // dublicate work??
 	if err != nil {
-		return errors.Wrap(err, "wrapping new request")
+		return errors.Wrap(err, "create GET request for release-manager")
 	}
 
 	req.Header.Add("Authorization", "Bearer "+handler.releaseManagerAuthToken)
