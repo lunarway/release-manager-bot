@@ -68,28 +68,31 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	// Create client
 	client := &http.Client{}
 
-	// Set route
-	resp, err := client.Get(servicePath + serviceName)
-	if err != nil {
-		return errors.Wrap(err, "issueing a GET to specified URL")
-	}
-
-	req, err := http.NewRequest("GET", servicePath+serviceName, nil) // dublicate work??
+	req, err := http.NewRequest("GET", servicePath+serviceName, nil)
 	if err != nil {
 		return errors.Wrap(err, "create GET request for release-manager")
 	}
 
 	req.Header.Add("Authorization", "Bearer "+handler.releaseManagerAuthToken)
 
-	resp, err = client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "sending HTTP request")
+	}
 
 	var policyResponse ListPoliciesResponse
 
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "reading release-manager HTTP response body")
+	}
 
 	defer resp.Body.Close()
 
-	json.Unmarshal(body, &policyResponse)
+	err = json.Unmarshal(body, &policyResponse)
+	if err != nil {
+		return errors.Wrap(err, "parsing release-manager HTTP response body as json")
+	}
 
 	var autoReleaseEnvironments []string
 	var botMessage string
