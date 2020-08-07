@@ -97,8 +97,11 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	var autoReleaseEnvironments []string
 	var botMessage string
 
-	// Not that easy to read, sry
-	if len(policyResponse.AutoReleases) > 0 {
+	if len(policyResponse.AutoReleases) == 0 {
+		log.Debug().Msg("No auto-release policies was detected for the base branch")
+		return nil
+	}
+	// do the rest
 		for i := 0; i < len(policyResponse.AutoReleases); i++ {
 			if policyResponse.AutoReleases[i].Branch == prBase {
 				autoReleaseEnvironments = append(autoReleaseEnvironments, policyResponse.AutoReleases[i].Environment)
