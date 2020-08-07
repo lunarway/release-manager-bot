@@ -66,7 +66,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	serviceName := event.GetRepo().GetName()
 	serviceName = strings.TrimSuffix(serviceName, "-service")
-	serviceName = strings.TrimPrefix(serviceName, "lunar-war-")
+	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
 	servicePath := handler.releaseManagerURL + "/policies?service="
 
 	// Create client
