@@ -56,7 +56,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	installationID := githubapp.GetInstallationIDFromEvent(&event)
 
 	ctx, logger := githubapp.PreparePRContext(ctx, installationID, repository, prNum)
-	if event.GetAction() != "created" {
+	if event.GetAction() != "opened" {
 		return nil
 	}
 
