@@ -13,8 +13,10 @@ import (
 
 type PRCreateHandler struct {
 	githubapp.ClientCreator
-
 	preamble string
+
+	releaseManagerAuthToken string
+	releaseManagerURL       string
 }
 
 func (handler *PRCreateHandler) Handles() []string {
@@ -61,9 +63,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	// Retrieve auto-release-policy
 
 	serviceName := event.GetRepo().GetName()
-	authToken := "XXXXXX" //Has to use env flags or other things to be more secure
-	host := "http://localhost:8081"
-	servicePath := host + "/policies?service="
+	servicePath := handler.releaseManagerURL + "/policies?service="
 
 	// Create client
 	client := &http.Client{}
@@ -79,7 +79,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		return errors.Wrap(err, "wrapping new request")
 	}
 
-	req.Header.Add("Authorization", "Bearer "+authToken)
+	req.Header.Add("Authorization", "Bearer "+handler.releaseManagerAuthToken)
 
 	resp, err = client.Do(req)
 
