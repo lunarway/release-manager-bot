@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-github/v32/github"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 type PRCreateHandler struct {
@@ -98,24 +99,26 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	var botMessage string
 
 	if len(policyResponse.AutoReleases) == 0 {
-		log.Debug().Msg("No auto-release policies was detected for the base branch")
+		log.Debug().Msg("No auto-release policies was detected for this service.")
 		return nil
 	}
-	// do the rest
-		for i := 0; i < len(policyResponse.AutoReleases); i++ {
-			if policyResponse.AutoReleases[i].Branch == prBase {
-				autoReleaseEnvironments = append(autoReleaseEnvironments, policyResponse.AutoReleases[i].Environment)
-			}
-		}
 
-		botMessage += "Auto-Release Policy detected for service " + serviceName + " at branch " + prBase + "\n\n"
-		botMessage += "Merging this PR will release the service to the following environments:\n"
-
-		for i := 0; i < len(autoReleaseEnvironments); i++ {
-			botMessage += autoReleaseEnvironments[i] + "\n"
+	for i := 0; i < len(policyResponse.AutoReleases); i++ {
+		if policyResponse.AutoReleases[i].Branch == prBase {
+			autoReleaseEnvironments = append(autoReleaseEnvironments, policyResponse.AutoReleases[i].Environment)
 		}
-	} else {
-		botMessage += "No auto-release policies was detected for the base branch"
+	}
+
+	if len(autoReleaseEnvironments) == 0 {
+		log.Debug().Msg("No auto-release policies was detected for this base branch.")
+		return nil
+	}
+
+	botMessage += "Auto-Release Policy detected for service " + serviceName + " at (base)branch " + prBase + "\n\n"
+	botMessage += "Merging this Pull Request will release the service to the following environments:\n"
+
+	for i := 0; i < len(autoReleaseEnvironments); i++ {
+		botMessage += autoReleaseEnvironments[i] + "\n"
 	}
 
 	logger.Debug().Msgf("%s", botMessage)
