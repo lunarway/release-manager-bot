@@ -16,7 +16,7 @@ func main() {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
 	configPath := pflag.String("config-path", "config.yml", "path to configuration file")
-	releaseManagerAuthToken := pflag.String("release-manager-auth-token", "", "auth token for accesing release manager")
+	releaseManagerAuthToken := pflag.String("release-manager-auth-token", "", "auth token for accessing release manager")
 	releaseManagerURL := pflag.String("release-manager-url", "http://localhost:8080", "url to release manager")
 	pflag.Parse()
 
