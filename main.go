@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"os"
 	"time"
 
@@ -9,15 +8,23 @@ import (
 	"github.com/palantir/go-baseapp/baseapp"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/rs/zerolog"
+	"github.com/spf13/pflag"
 	"goji.io/pat"
 )
 
 func main() {
-
-	configPath := flag.String("config-path", "config.yml", "path to configuration file")
-	flag.Parse()
-
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+
+	configPath := pflag.String("config-path", "config.yml", "path to configuration file")
+	releaseManagerAuthToken := pflag.String("release-manager-auth-token", "", "auth token for accessing release manager")
+	releaseManagerURL := pflag.String("release-manager-url", "http://localhost:8080", "url to release manager")
+	pflag.Parse()
+
+	if *releaseManagerAuthToken == "" {
+		logger.Error().Msgf("flag release-manager-auth-token is empty")
+		os.Exit(1)
+		return
+	}
 
 	config, err := ReadConfig(*configPath)
 	if err != nil {
@@ -52,13 +59,15 @@ func main() {
 	}
 
 	pullRequestHandler := &PRCreateHandler{
-		ClientCreator: cc,
-		preamble:      config.AppConfig.PullRequestPreamble,
+		ClientCreator:           cc,
+		preamble:                config.AppConfig.PullRequestPreamble,
+		releaseManagerAuthToken: *releaseManagerAuthToken,
+		releaseManagerURL:       *releaseManagerURL,
 	}
 
 	webhookHandler := githubapp.NewDefaultEventDispatcher(config.Github, pullRequestHandler)
 
-	server.Mux().Handle(pat.Post("/webhook/github"), webhookHandler)
+	server.Mux().Handle(pat.Post("/webhook/github/bot"), webhookHandler)
 
 	// Start is blocking
 	err = server.Start()
