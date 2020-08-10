@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -83,15 +84,19 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	if err != nil {
 		return errors.Wrap(err, "sending HTTP request")
 	}
-
-	var policyResponse ListPoliciesResponse
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return errors.Wrap(err, "reading release-manager HTTP response body")
 	}
 
-	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		logger.Info().Msgf("Request body: %v", body)
+		return errors.Errorf("expected status code 200, but recieved " + fmt.Sprintf("%v", resp.StatusCode))
+	}
+
+	var policyResponse ListPoliciesResponse
 
 	err = json.Unmarshal(body, &policyResponse)
 	if err != nil {
