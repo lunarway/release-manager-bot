@@ -81,21 +81,21 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	req.Header.Add("Authorization", "Bearer "+handler.releaseManagerAuthToken)
 
 	resp, err := client.Do(req)
-	body, err := ioutil.ReadAll(resp.Body)
-
 	if err != nil {
 		return errors.Wrap(err, "sending HTTP request")
 	}
-	if resp.StatusCode != 200 {
-		logger.Info().Msgf("Request body: %v", body)
-		return errors.Wrap(err, "expected status code 200, but recieved "+fmt.Sprintf("%v", resp.StatusCode))
-	}
 
-	var policyResponse ListPoliciesResponse
-
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return errors.Wrap(err, "reading release-manager HTTP response body")
 	}
+
+	if resp.StatusCode != 200 {
+		logger.Info().Msgf("Request body: %v", body)
+		return errors.Errorf("Expected status code 200, but recieved " + fmt.Sprintf("%v", resp.StatusCode))
+	}
+
+	var policyResponse ListPoliciesResponse
 
 	defer resp.Body.Close()
 
