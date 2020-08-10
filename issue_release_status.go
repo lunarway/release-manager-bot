@@ -134,7 +134,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	// Send PR comment
 	client, err := handler.NewInstallationClient(installationID)
 	if err != nil {
-		return errors.Wrap(err, "creating new github.Client")
+		return errors.Wrapf(err, "creating new github.Client from installation id '%s'", installationID)
 	}
 
 	repositoryOwner := repository.GetOwner().GetLogin()
