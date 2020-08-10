@@ -15,5 +15,5 @@ start:
 	 ./release-manager-bot \
 	 --release-manager-auth-token $(HAMCTL_AUTH_TOKEN) \
 	 --release-manager-url http://localhost:8081/ \
-	 --github-privateKey "`cat /Users/jacobvaldemar/Downloads/release-manager-bot.2020-08-04.private-key.pem`" \
+	 --github-privateKey "`cat privatekey.pem`" \
 	 --github-integrationID 75542
