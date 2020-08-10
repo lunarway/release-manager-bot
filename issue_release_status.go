@@ -71,7 +71,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	servicePath := handler.releaseManagerURL + "/policies?service="
 
 	// Create client
-	client := &http.Client{}
+	httpClient := &http.Client{}
 
 	req, err := http.NewRequest("GET", servicePath+serviceName, nil)
 	if err != nil {
@@ -80,7 +80,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	req.Header.Add("Authorization", "Bearer "+handler.releaseManagerAuthToken)
 
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "sending HTTP request")
 	}
@@ -131,41 +131,22 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	logger.Debug().Msgf("%s", botMessage)
 
-	/*
-		var path string
-		var resp httpinternal.ListPoliciesResponse
-		var client *httpinternal.Client
-		var serviceName string
-
-		params := url.Values{}
-		params.Add("service", serviceName)
-
-		path, err := client.URLWithQuery(path, params)
-		if err != nil {
-			return err
-		}
-
-		err = client.Do(http.MethodGet, path, nil, &resp)
-	*/
-
 	// Send PR comment
-
-	/*client, err := handler.NewInstallationClient(installationID)
+	client, err := handler.NewInstallationClient(installationID)
 	if err != nil {
-		return errors.Wrap(err, "installing client")
+		return errors.Wrap(err, "creating new github.Client")
 	}
 
 	repositoryOwner := repository.GetOwner().GetLogin()
 	repositoryName := repository.GetName()
 
-	msg := fmt.Sprintf("To the stars! :-)")
 	newComment := github.IssueComment{
-		Body: &msg,
+		Body: &botMessage,
 	}
 
 	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, &newComment); err != nil {
-		logger.Error().Err(err).Msg("Failed to comment on pull request")
-	}*/
+		return errors.Wrap(err, "commenting on pull request")
+	}
 
 	return nil
 }
