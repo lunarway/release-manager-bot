@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-github/v32/github"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -45,6 +46,8 @@ type ListPoliciesResponse struct {
 }
 
 func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryID string, payload []byte) error {
+	zerolog.Ctx(ctx).Info().RawJSON("payload", payload).Msgf("handling delivery ID: '%s', eventtype '%s'", deliveryID, eventType)
+
 	// Recieve webhook
 	var event github.PullRequestEvent
 
@@ -146,7 +149,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	}
 
 	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, &newComment); err != nil {
-		return errors.Wrap(err, "commenting on pull request")
+		return errors.Wrapf(err, "commenting on pull request, with DeliveryID '%v'", deliveryID)
 	}
 
 	return nil
