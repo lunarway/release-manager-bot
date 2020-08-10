@@ -25,7 +25,7 @@ func main() {
 
 	var githubappConfig githubapp.Config
 	pflag.StringVar(&githubappConfig.V3APIURL, "github-v3_api_url", "https://api.github.com/", "github v3 api url")
-	pflag.Int64Var(&githubappConfig.App.IntegrationID, "github-integrationID", 0, "github integration ID")
+	pflag.Int64Var(&githubappConfig.App.IntegrationID, "github-integrationID", 0, "github App ID (App->General->About->App ID)")
 	pflag.StringVar(&githubappConfig.App.WebhookSecret, "github-webhookSecret", "", "github webhook secret")
 	pflag.StringVar(&githubappConfig.App.PrivateKey, "github-privateKey", "", "github app private key content")
 

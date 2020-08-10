@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-github/v32/github"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -45,6 +46,8 @@ type ListPoliciesResponse struct {
 }
 
 func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryID string, payload []byte) error {
+	zerolog.Ctx(ctx).Info().RawJSON("payload", payload).Msgf("handling delivery ID: '%s', eventtype '%s'", deliveryID, eventType)
+
 	// Recieve webhook
 	var event github.PullRequestEvent
 
@@ -71,7 +74,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	servicePath := handler.releaseManagerURL + "/policies?service="
 
 	// Create client
-	client := &http.Client{}
+	httpClient := &http.Client{}
 
 	req, err := http.NewRequest("GET", servicePath+serviceName, nil)
 	if err != nil {
@@ -80,7 +83,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	req.Header.Add("Authorization", "Bearer "+handler.releaseManagerAuthToken)
 
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "sending HTTP request")
 	}
@@ -131,41 +134,23 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	logger.Debug().Msgf("%s", botMessage)
 
-	/*
-		var path string
-		var resp httpinternal.ListPoliciesResponse
-		var client *httpinternal.Client
-		var serviceName string
-
-		params := url.Values{}
-		params.Add("service", serviceName)
-
-		path, err := client.URLWithQuery(path, params)
-		if err != nil {
-			return err
-		}
-
-		err = client.Do(http.MethodGet, path, nil, &resp)
-	*/
-
 	// Send PR comment
-
-	/*client, err := handler.NewInstallationClient(installationID)
+	client, err := handler.NewInstallationClient(installationID)
 	if err != nil {
-		return errors.Wrap(err, "installing client")
+		return errors.Wrapf(err, "creating new github.Client from installation id '%d'", installationID)
 	}
 
 	repositoryOwner := repository.GetOwner().GetLogin()
 	repositoryName := repository.GetName()
 
-	msg := fmt.Sprintf("To the stars! :-)")
+	// It's intentional that it's an IssueComment. The alternative PullRequestComment is a review comment
 	newComment := github.IssueComment{
-		Body: &msg,
+		Body: &botMessage,
 	}
 
 	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, &newComment); err != nil {
-		logger.Error().Err(err).Msg("Failed to comment on pull request")
-	}*/
+		return errors.Wrapf(err, "commenting on pull request, with DeliveryID '%v'", deliveryID)
+	}
 
 	return nil
 }
