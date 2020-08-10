@@ -1,10 +1,21 @@
 # url to a running release-manager
-URL=https://api.dev.lunarway.com/release-manager-bot
+#URL=https://api.dev.lunarway.com/release-manager-bot
+URL=http://localhost:8080
 FILE=payload.json
-PAYLOAD=`cat $(FILE)`
 
 github-webhook:
 	curl -H 'X-GitHub-Event: pull_request' \
 	-H 'Content-Type: application/json' \
 	-d '$(shell cat ${FILE})' \
 	$(URL)/webhook/github/bot
+
+
+
+start:
+	go build
+	 ./release-manager-bot \
+	 --release-manager-auth-token $(HAMCTL_AUTH_TOKEN) \
+	 --release-manager-url http://localhost:8081/ \
+	 --github-privateKey "`cat /Users/jacobvaldemar/Downloads/release-manager-bot.2020-08-04.private-key.pem`" \
+	 --github-integrationID 75542
+
