@@ -15,9 +15,20 @@ import (
 func main() {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
-	configPath := pflag.String("config-path", "config.yml", "path to configuration file")
 	releaseManagerAuthToken := pflag.String("release-manager-auth-token", "", "auth token for accessing release manager")
 	releaseManagerURL := pflag.String("release-manager-url", "http://localhost:8080", "url to release manager")
+
+	var httpServerConfig baseapp.HTTPConfig
+	pflag.StringVar(&httpServerConfig.Address, "http-address", "localhost", "http listen address")
+	pflag.IntVar(&httpServerConfig.Port, "http-port", 8080, "http listen port")
+	pflag.StringVar(&httpServerConfig.PublicURL, "http-public_url", "https://localhost:8080", "http public url")
+
+	var githubappConfig githubapp.Config
+	pflag.StringVar(&githubappConfig.V3APIURL, "github-v3_api_url", "https://api.github.com/", "github v3 api url")
+	pflag.Int64Var(&githubappConfig.App.IntegrationID, "github-integrationID", 0, "github integration ID")
+	pflag.StringVar(&githubappConfig.App.WebhookSecret, "github-webhookSecret", "", "github webhook secret")
+	pflag.StringVar(&githubappConfig.App.PrivateKey, "github-privateKey", "", "github app private key content")
+
 	pflag.Parse()
 
 	if *releaseManagerAuthToken == "" {
@@ -26,15 +37,8 @@ func main() {
 		return
 	}
 
-	config, err := ReadConfig(*configPath)
-	if err != nil {
-		logger.Error().Msgf("Failed to parse config: %v", err)
-		os.Exit(1)
-		return
-	}
-
 	server, err := baseapp.NewServer(
-		config.Server,
+		httpServerConfig,
 		baseapp.DefaultParams(logger, "exampleapp.")...,
 	)
 	if err != nil {
@@ -44,7 +48,7 @@ func main() {
 	}
 
 	cc, err := githubapp.NewDefaultCachingClientCreator(
-		config.Github,
+		githubappConfig,
 		githubapp.WithClientUserAgent("release-managar-bot/1.0.0"),
 		githubapp.WithClientTimeout(3*time.Second),
 		githubapp.WithClientCaching(false, func() httpcache.Cache { return httpcache.NewMemoryCache() }),
@@ -60,12 +64,11 @@ func main() {
 
 	pullRequestHandler := &PRCreateHandler{
 		ClientCreator:           cc,
-		preamble:                config.AppConfig.PullRequestPreamble,
 		releaseManagerAuthToken: *releaseManagerAuthToken,
 		releaseManagerURL:       *releaseManagerURL,
 	}
 
-	webhookHandler := githubapp.NewDefaultEventDispatcher(config.Github, pullRequestHandler)
+	webhookHandler := githubapp.NewDefaultEventDispatcher(githubappConfig, pullRequestHandler)
 
 	server.Mux().Handle(pat.Post("/webhook/github/bot"), webhookHandler)
 
