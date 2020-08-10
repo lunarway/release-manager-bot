@@ -134,12 +134,13 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	// Send PR comment
 	client, err := handler.NewInstallationClient(installationID)
 	if err != nil {
-		return errors.Wrapf(err, "creating new github.Client from installation id '%s'", installationID)
+		return errors.Wrapf(err, "creating new github.Client from installation id '%d'", installationID)
 	}
 
 	repositoryOwner := repository.GetOwner().GetLogin()
 	repositoryName := repository.GetName()
 
+	// It's intentional that it's an IssueComment. The alternative PullRequestComment is a review comment
 	newComment := github.IssueComment{
 		Body: &botMessage,
 	}
