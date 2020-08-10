@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -82,6 +83,9 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "sending HTTP request")
+	}
+	if resp.StatusCode != 200 {
+		return errors.Wrap(err, "expected status code 200, but recieved "+fmt.Sprintf("%v", resp.StatusCode))
 	}
 
 	var policyResponse ListPoliciesResponse
