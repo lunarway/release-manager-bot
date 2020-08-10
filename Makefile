@@ -1,5 +1,4 @@
 # url to a running release-manager
-#URL=https://api.dev.lunarway.com/release-manager-bot
 URL=http://localhost:8080
 FILE=payload.json
 
@@ -18,4 +17,3 @@ start:
 	 --release-manager-url http://localhost:8081/ \
 	 --github-privateKey "`cat /Users/jacobvaldemar/Downloads/release-manager-bot.2020-08-04.private-key.pem`" \
 	 --github-integrationID 75542
-
