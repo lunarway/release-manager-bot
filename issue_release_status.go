@@ -12,7 +12,6 @@ import (
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 type PRCreateHandler struct {
@@ -108,12 +107,6 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	}
 
 	var autoReleaseEnvironments []string
-	var botMessage string
-
-	if len(policyResponse.AutoReleases) == 0 {
-		log.Debug().Msg("No auto-release policies was detected for this service.")
-		return nil
-	}
 
 	for i := 0; i < len(policyResponse.AutoReleases); i++ {
 		if policyResponse.AutoReleases[i].Branch == prBase {
@@ -121,17 +114,12 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		}
 	}
 
-	if len(autoReleaseEnvironments) == 0 {
-		log.Debug().Msg("No auto-release policies was detected for this base branch.")
-		return nil
-	}
-
 	messageData := BotMessageData{
 		Branch:                  prBase,
 		AutoReleaseEnvironments: autoReleaseEnvironments,
 		Template:                handler.messageTemplate,
 	}
-	botMessage, err = BotMessage(messageData)
+	botMessage, err := BotMessage(messageData)
 	if err != nil {
 		return errors.Wrapf(err, "creating bot message")
 	}

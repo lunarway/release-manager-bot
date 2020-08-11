@@ -16,4 +16,5 @@ start:
 	 --release-manager-auth-token $(HAMCTL_AUTH_TOKEN) \
 	 --release-manager-url http://localhost:8081/ \
 	 --github-private-key "`cat $(GITHUB_PRIVATE_KEY_PATH)`" \
-	 --github-integration-id 75542
+	 --github-integration-id 75542 \
+	 --message-template "`cat $(MESSAGE_TEMPLATE_PATH)`"
