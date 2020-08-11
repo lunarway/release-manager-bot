@@ -19,8 +19,7 @@ func BotMessage(data BotMessageData) (string, error) {
 	template := template.New("test")
 	template, err := template.Parse(data.Template)
 	if err != nil {
-		return "", errors.Wrapf(err, "invalid template: %s", data.Template)
-		// or "parsing template"
+		return "", errors.Wrapf(err, "parsing template: '%s'", data.Template)
 	}
 
 	err = template.Execute(&message, data)
