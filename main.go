@@ -36,13 +36,13 @@ func main() {
 
 	// Flag validation
 	if *releaseManagerAuthToken == "" {
-		logger.Error().Msgf("flag release-manager-auth-token is empty")
+		logger.Error().Msgf("flag 'release-manager-auth-token' is empty")
 		os.Exit(1)
 		return
 	}
 	_, err := template.New("flagValidation").Parse(*messageTemplate)
 	if err != nil {
-		logger.Error().Msgf("flag message-template parsing error recieved: %v", err)
+		logger.Error().Msgf("flag 'message-template' parsing error recieved: %v", err)
 		os.Exit(1)
 		return
 	}
