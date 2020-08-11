@@ -15,5 +15,5 @@ start:
 	 ./release-manager-bot \
 	 --release-manager-auth-token $(HAMCTL_AUTH_TOKEN) \
 	 --release-manager-url http://localhost:8081/ \
-	 --github-privateKey "`cat $(GITHUB_PRIVATE_KEY_PATH)`" \
-	 --github-integrationID 75542
+	 --github-private-key "`cat $(GITHUB_PRIVATE_KEY_PATH)`" \
+	 --github-integration-id 75542

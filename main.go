@@ -21,13 +21,15 @@ func main() {
 	var httpServerConfig baseapp.HTTPConfig
 	pflag.StringVar(&httpServerConfig.Address, "http-address", "localhost", "http listen address")
 	pflag.IntVar(&httpServerConfig.Port, "http-port", 8080, "http listen port")
-	pflag.StringVar(&httpServerConfig.PublicURL, "http-public_url", "https://localhost:8080", "http public url")
+	pflag.StringVar(&httpServerConfig.PublicURL, "http-public-url", "https://localhost:8080", "http public url")
 
 	var githubappConfig githubapp.Config
-	pflag.StringVar(&githubappConfig.V3APIURL, "github-v3_api_url", "https://api.github.com/", "github v3 api url")
-	pflag.Int64Var(&githubappConfig.App.IntegrationID, "github-integrationID", 0, "github App ID (App->General->About->App ID)")
-	pflag.StringVar(&githubappConfig.App.WebhookSecret, "github-webhookSecret", "", "github webhook secret")
-	pflag.StringVar(&githubappConfig.App.PrivateKey, "github-privateKey", "", "github app private key content")
+	pflag.StringVar(&githubappConfig.V3APIURL, "github-v3-api-url", "https://api.github.com/", "github v3 api url")
+	pflag.Int64Var(&githubappConfig.App.IntegrationID, "github-integration-id", 0, "github App ID (App->General->About->App ID)")
+	pflag.StringVar(&githubappConfig.App.WebhookSecret, "github-webhook-secret", "", "github webhook secret")
+	pflag.StringVar(&githubappConfig.App.PrivateKey, "github-private-key", "", "github app private key content")
+
+	messageTemplate := pflag.String("message-template", "'{{.Branch}}' will auto-release to: {{range .AutoReleaseEnvironments}}\n {{.}}{{end}}", "Template string used when commenting on pull requests on Github. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].")
 
 	pflag.Parse()
 
@@ -66,6 +68,7 @@ func main() {
 		ClientCreator:           cc,
 		releaseManagerAuthToken: *releaseManagerAuthToken,
 		releaseManagerURL:       *releaseManagerURL,
+		messageTemplate:         *messageTemplate,
 	}
 
 	webhookHandler := githubapp.NewDefaultEventDispatcher(githubappConfig, pullRequestHandler)
