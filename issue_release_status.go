@@ -21,6 +21,7 @@ type PRCreateHandler struct {
 
 	releaseManagerAuthToken string
 	releaseManagerURL       string
+	messageTemplate         string
 }
 
 func (handler *PRCreateHandler) Handles() []string {
@@ -125,11 +126,14 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		return nil
 	}
 
-	botMessage += "Auto-Release Policy detected for service " + serviceName + " at (base)branch " + prBase + "\n\n"
-	botMessage += "Merging this Pull Request will release the service to the following environments:\n"
-
-	for i := 0; i < len(autoReleaseEnvironments); i++ {
-		botMessage += autoReleaseEnvironments[i] + "\n"
+	messageData := BotMessageData{
+		Branch:                  prBase,
+		AutoReleaseEnvironments: autoReleaseEnvironments,
+		Template:                handler.messageTemplate,
+	}
+	botMessage, err = BotMessage(messageData)
+	if err != nil {
+		return errors.Wrapf(err, "creating bot message")
 	}
 
 	logger.Debug().Msgf("%s", botMessage)

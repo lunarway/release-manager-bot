@@ -29,6 +29,9 @@ func main() {
 	pflag.StringVar(&githubappConfig.App.WebhookSecret, "github-webhookSecret", "", "github webhook secret")
 	pflag.StringVar(&githubappConfig.App.PrivateKey, "github-privateKey", "", "github app private key content")
 
+	var messageTemplate string
+	pflag.StringVar(&messageTemplate, "message-template", "'{{.Branch}}' will auto-release to: {{range .AutoReleaseEnvironments}}\n {{.}}{{end}}", "Template string to use when commenting on PR on Github. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview]. See template.go.")
+
 	pflag.Parse()
 
 	if *releaseManagerAuthToken == "" {
@@ -66,6 +69,7 @@ func main() {
 		ClientCreator:           cc,
 		releaseManagerAuthToken: *releaseManagerAuthToken,
 		releaseManagerURL:       *releaseManagerURL,
+		messageTemplate:         messageTemplate,
 	}
 
 	webhookHandler := githubapp.NewDefaultEventDispatcher(githubappConfig, pullRequestHandler)
