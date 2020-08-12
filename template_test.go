@@ -3,7 +3,6 @@ package main
 import (
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +11,7 @@ func TestBotMessage(t *testing.T) {
 		name            string
 		input           BotMessageData
 		expectedMessage string
-		expectedError   error
+		expectedError   bool
 	}{
 		{
 			name: "valid template",
@@ -24,7 +23,7 @@ func TestBotMessage(t *testing.T) {
 				},
 			},
 			expectedMessage: "'master' will auto-release to: \n dev",
-			expectedError:   nil,
+			expectedError:   false,
 		},
 		{
 			name: "invalid template",
@@ -36,7 +35,7 @@ func TestBotMessage(t *testing.T) {
 				},
 			},
 			expectedMessage: "",
-			expectedError:   errors.New(""),
+			expectedError:   true,
 		},
 		{
 			name: "no template",
@@ -48,7 +47,7 @@ func TestBotMessage(t *testing.T) {
 				},
 			},
 			expectedMessage: "",
-			expectedError:   errors.New(""),
+			expectedError:   true,
 		},
 	}
 
@@ -59,12 +58,7 @@ func TestBotMessage(t *testing.T) {
 
 			// Assert
 			assert.Equal(t, tc.expectedMessage, actualMessage)
-
-			if tc.expectedError != nil {
-				assert.Error(t, actualError)
-			} else {
-				assert.NoError(t, actualError)
-			}
+			assert.Equal(t, tc.expectedError, actualError != nil)
 		})
 	}
 }
