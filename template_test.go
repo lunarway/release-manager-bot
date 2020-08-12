@@ -54,12 +54,8 @@ func TestBotMessage(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			// Arrange
-			var actualMessage string
-			var actualError error
-
 			// Act
-			actualMessage, actualError = BotMessage(tc.input)
+			actualMessage, actualError := BotMessage(tc.input)
 
 			// Assert
 			assert.Equal(t, tc.expectedMessage, actualMessage)
