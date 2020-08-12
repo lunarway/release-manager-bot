@@ -14,6 +14,17 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// Util
+func Any(vs []string, f func(string) bool) bool {
+	for _, v := range vs {
+		if f(v) {
+			return true
+		}
+	}
+	return false
+}
+
+// Structs
 type PRCreateHandler struct {
 	githubapp.ClientCreator
 	preamble string
@@ -21,6 +32,7 @@ type PRCreateHandler struct {
 	releaseManagerAuthToken string
 	releaseManagerURL       string
 	messageTemplate         string
+	repoFilters             []string
 }
 
 func (handler *PRCreateHandler) Handles() []string {
@@ -45,6 +57,7 @@ type ListPoliciesResponse struct {
 	BranchRestrictions []BranchRestrictionPolicy `json:"branchRestrictions,omitempty"`
 }
 
+// Handler
 func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryID string, payload []byte) error {
 	zerolog.Ctx(ctx).Info().Msgf("handling delivery ID: '%s', eventtype '%s'", deliveryID, eventType)
 
@@ -60,20 +73,25 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	installationID := githubapp.GetInstallationIDFromEvent(&event)
 
 	ctx, logger := githubapp.PreparePRContext(ctx, installationID, repository, prNum)
+
+	// Filters
 	if event.GetAction() != "opened" {
+		return nil
+	}
+	if Any(handler.repoFilters, func(filterRepo string) bool {
+		return filterRepo == repository.GetName()
+	}) {
 		return nil
 	}
 
 	prBase := event.GetPullRequest().GetBase().GetRef() // The branch which the pull request is ending.
 
 	// Retrieve auto-release-policy
-
 	serviceName := event.GetRepo().GetName()
 	serviceName = strings.TrimSuffix(serviceName, "-service")
 	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
 	servicePath := handler.releaseManagerURL + "/policies?service="
 
-	// Create client
 	httpClient := &http.Client{}
 
 	req, err := http.NewRequest("GET", servicePath+serviceName, nil)
