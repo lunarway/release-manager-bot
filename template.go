@@ -16,6 +16,10 @@ type BotMessageData struct {
 func BotMessage(data BotMessageData) (string, error) {
 	var message strings.Builder
 
+	if data.Template == "" {
+		return "", errors.New("template is empty")
+	}
+
 	template := template.New("test")
 	template, err := template.Parse(data.Template)
 	if err != nil {

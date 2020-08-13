@@ -10,6 +10,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.19.0
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.4.0
 	goji.io v2.0.2+incompatible
 	gopkg.in/yaml.v2 v2.2.8
 )
