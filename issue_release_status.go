@@ -15,13 +15,47 @@ import (
 )
 
 // Util
-func Any(vs []string, f func(string) bool) bool {
+func any(vs []string, f func(string) bool) bool {
 	for _, v := range vs {
 		if f(v) {
 			return true
 		}
 	}
 	return false
+}
+
+func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger) error {
+	httpClient := &http.Client{}
+
+	req, err := http.NewRequest("GET", endpoint, nil)
+	if err != nil {
+		return errors.Wrapf(err, "create GET request for release-manager endpoint '%s'", endpoint)
+	}
+
+	req.Header.Add("Authorization", "Bearer "+authToken)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "sending HTTP request")
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "reading release-manager HTTP response body")
+	}
+
+	if resp.StatusCode != 200 {
+		logger.Info().Msgf("Request body: %v", body)
+		return errors.Errorf("expected status code 200, but recieved " + fmt.Sprintf("%v", resp.StatusCode))
+	}
+
+	err = json.Unmarshal(body, output)
+	if err != nil {
+		return errors.Wrap(err, "parsing release-manager HTTP response body as json")
+	}
+
+	return nil
 }
 
 // Structs
@@ -37,24 +71,6 @@ type PRCreateHandler struct {
 
 func (handler *PRCreateHandler) Handles() []string {
 	return []string{"pull_request"}
-}
-
-type AutoReleasePolicy struct {
-	ID          string `json:"id,omitempty"`
-	Branch      string `json:"branch,omitempty"`
-	Environment string `json:"environment,omitempty"`
-}
-
-type BranchRestrictionPolicy struct {
-	ID          string `json:"id,omitempty"`
-	Environment string `json:"environment,omitempty"`
-	BranchRegex string `json:"branchRegex,omitempty"`
-}
-
-type ListPoliciesResponse struct {
-	Service            string                    `json:"service,omitempty"`
-	AutoReleases       []AutoReleasePolicy       `json:"autoReleases,omitempty"`
-	BranchRestrictions []BranchRestrictionPolicy `json:"branchRestrictions,omitempty"`
 }
 
 // Handler
@@ -74,58 +90,42 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	ctx, logger := githubapp.PreparePRContext(ctx, installationID, repository, prNum)
 
+	prBase := event.GetPullRequest().GetBase().GetRef() // The branch which the pull request is ending.
+	serviceName := event.GetRepo().GetName()
+	serviceName = strings.TrimSuffix(serviceName, "-service")
+	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
+	policyPath := handler.releaseManagerURL + "/policies?service="
+	describeArtifactPath := handler.releaseManagerURL + "/describe/artifact/"
+
 	// Filters
+	// - Action type
 	if event.GetAction() != "opened" {
 		return nil
 	}
-	if Any(handler.repoFilters, func(filterRepo string) bool {
+	// - Services not managed by release-manager
+	var describeArtifactResponse DescribeArtifactResponse
+	err := retrieveFromReleaseManager(describeArtifactPath+serviceName, handler.releaseManagerAuthToken, &describeArtifactResponse, logger)
+	if err != nil {
+		return errors.Wrap(err, "requesting describeArtifact from release manager")
+	}
+	if len(describeArtifactResponse.Artifacts) == 0 {
+		return nil
+	}
+	// - Ignored repositories
+	if any(handler.repoFilters, func(filterRepo string) bool {
 		return filterRepo == repository.GetName()
 	}) {
 		return nil
 	}
 
-	prBase := event.GetPullRequest().GetBase().GetRef() // The branch which the pull request is ending.
-
-	// Retrieve auto-release-policy
-	serviceName := event.GetRepo().GetName()
-	serviceName = strings.TrimSuffix(serviceName, "-service")
-	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
-	servicePath := handler.releaseManagerURL + "/policies?service="
-
-	httpClient := &http.Client{}
-
-	req, err := http.NewRequest("GET", servicePath+serviceName, nil)
-	if err != nil {
-		return errors.Wrap(err, "create GET request for release-manager")
-	}
-
-	req.Header.Add("Authorization", "Bearer "+handler.releaseManagerAuthToken)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "sending HTTP request")
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return errors.Wrap(err, "reading release-manager HTTP response body")
-	}
-
-	if resp.StatusCode != 200 {
-		logger.Info().Msgf("Request body: %v", body)
-		return errors.Errorf("expected status code 200, but recieved " + fmt.Sprintf("%v", resp.StatusCode))
-	}
-
+	// Get policies
 	var policyResponse ListPoliciesResponse
-
-	err = json.Unmarshal(body, &policyResponse)
+	err = retrieveFromReleaseManager(policyPath+serviceName, handler.releaseManagerAuthToken, &policyResponse, logger)
 	if err != nil {
-		return errors.Wrap(err, "parsing release-manager HTTP response body as json")
+		return errors.Wrap(err, "requesting policy from release manager")
 	}
 
 	var autoReleaseEnvironments []string
-
 	for i := 0; i < len(policyResponse.AutoReleases); i++ {
 		if policyResponse.AutoReleases[i].Branch == prBase {
 			autoReleaseEnvironments = append(autoReleaseEnvironments, policyResponse.AutoReleases[i].Environment)
