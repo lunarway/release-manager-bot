@@ -59,7 +59,7 @@ type ListPoliciesResponse struct {
 
 // Handler
 func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryID string, payload []byte) error {
-	zerolog.Ctx(ctx).Info().RawJSON("payload", payload).Msgf("handling delivery ID: '%s', eventtype '%s'", deliveryID, eventType)
+	zerolog.Ctx(ctx).Info().Msgf("handling delivery ID: '%s', eventtype '%s'", deliveryID, eventType)
 
 	// Recieve webhook
 	var event github.PullRequestEvent
