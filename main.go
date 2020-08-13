@@ -31,7 +31,7 @@ func main() {
 	pflag.StringVar(&githubappConfig.App.PrivateKey, "github-private-key", "", "github app private key content")
 
 	messageTemplate := pflag.String("message-template", "'{{.Branch}}' will auto-release to: {{range .AutoReleaseEnvironments}}\n {{.}}{{end}}", "Template string used when commenting on pull requests on Github. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].")
-	repoFilter := pflag.StringSlice("filter-repository", []string{}, "Slice with names of repositories which the bot should not respond to.")
+	repoFilter := pflag.StringSlice("ignored-repositories", []string{}, "Slice with names of repositories which the bot should not respond to.")
 
 	pflag.Parse()
 
