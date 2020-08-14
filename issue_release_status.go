@@ -97,7 +97,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	policyPath := handler.releaseManagerURL + "/policies?service="
 	describeArtifactPath := handler.releaseManagerURL + "/describe/artifact/"
 
-	// Filters
+	// Filters - Consider using Chain of Responsibility for this if it gets bloated.
 	// - Action type
 	if event.GetAction() != "opened" {
 		logger.Info().Msgf("Filter ActionType triggered. Action: '%s'", event.GetAction())
@@ -110,14 +110,14 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		return errors.Wrap(err, "requesting describeArtifact from release manager")
 	}
 	if len(describeArtifactResponse.Artifacts) == 0 {
-		logger.Info().Msg("Filter UnmanagedRepo triggered")
+		logger.Info().Msgf("Filter UnmanagedService triggered. Service: '%s'", serviceName)
 		return nil
 	}
 	// - Ignored repositories
 	if any(handler.repoFilters, func(filterRepo string) bool {
 		return filterRepo == repository.GetName()
 	}) {
-		logger.Info().Msg("Filter IgnoredRepo triggered")
+		logger.Info().Msgf("Filter IgnoredRepo triggered. Repo: '%s'", repository.GetName())
 		return nil
 	}
 
@@ -163,7 +163,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		return errors.Wrapf(err, "commenting on pull request, with DeliveryID '%v'", deliveryID)
 	}
 
-	logger.Info().Msg("Comment created")
+	logger.Info().Msgf("Comment created on %s PR %d", repositoryName, *event.PullRequest.Number)
 
 	return nil
 }
