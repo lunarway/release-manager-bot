@@ -1,20 +1,31 @@
 package main
 
 import (
+	"net/http"
 	"os"
 	"text/template"
 	"time"
 
+	"github.com/bluekeyes/hatpear"
 	"github.com/gregjones/httpcache"
 	"github.com/palantir/go-baseapp/baseapp"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/hlog"
 	"github.com/spf13/pflag"
 	"goji.io/pat"
 )
 
 func main() {
-	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+	zerolog.TimestampFieldName = "@timestamp"
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("log_type", "app").
+		Logger()
+	httpLogger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("log_type", "reqresp").
+		Logger()
 
 	releaseManagerAuthToken := pflag.String("release-manager-auth-token", "", "auth token for accessing release manager")
 	releaseManagerURL := pflag.String("release-manager-url", "http://localhost:8080", "url to release manager")
@@ -37,7 +48,7 @@ func main() {
 
 	// Flag validation
 	if *releaseManagerAuthToken == "" {
-		logger.Error().Msgf("flag 'release-manager-auth-token' is empty")
+		logger.Error().Msg("flag 'release-manager-auth-token' is empty")
 		os.Exit(1)
 		return
 	}
@@ -50,7 +61,19 @@ func main() {
 
 	server, err := baseapp.NewServer(
 		httpServerConfig,
-		baseapp.DefaultParams(logger, "exampleapp.")...,
+		baseapp.WithLogger(logger),
+		baseapp.WithMiddleware(
+			hlog.NewHandler(logger),
+			hlog.RequestIDHandler("rid", "X-Request-ID"),
+			baseapp.AccessHandler(func(r *http.Request, status int, size int64, elapsed time.Duration) {
+				httpLogger.Info().Msgf("[%d] %s %s", status, r.Method, r.URL.String())
+			}),
+			hatpear.Catch(baseapp.HandleRouteError),
+			hatpear.Recover(),
+		),
+		baseapp.WithUTCNanoTime(),
+		baseapp.WithErrorLogging(baseapp.RichErrorMarshalFunc),
+		baseapp.WithMetrics(),
 	)
 	if err != nil {
 		logger.Error().Msgf("Failed to instatiate http server: %v", err)
