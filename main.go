@@ -66,7 +66,7 @@ func main() {
 			hlog.NewHandler(logger),
 			hlog.RequestIDHandler("rid", "X-Request-ID"),
 			baseapp.AccessHandler(func(r *http.Request, status int, size int64, elapsed time.Duration) {
-				httpLogger.Info().Msgf("[%d] %s %s", status, r.Method, r.URL.String())
+				httpLogger.Info().Int64("responseTime", elapsed.Milliseconds()).Msgf("[%d] %s %s", status, r.Method, r.URL.String())
 			}),
 			hatpear.Catch(baseapp.HandleRouteError),
 			hatpear.Recover(),

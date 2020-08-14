@@ -75,7 +75,7 @@ func (handler *PRCreateHandler) Handles() []string {
 
 // Handler
 func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryID string, payload []byte) error {
-	zerolog.Ctx(ctx).Info().Msgf("handling delivery ID: '%s', eventtype '%s'", deliveryID, eventType)
+	zerolog.Ctx(ctx).Info().Msgf("Handling deliveryID: '%s', eventType '%s'", deliveryID, eventType)
 
 	// Recieve webhook
 	var event github.PullRequestEvent
@@ -100,6 +100,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	// Filters
 	// - Action type
 	if event.GetAction() != "opened" {
+		logger.Info().Msgf("Filter ActionType triggered. Action: '%s'", event.GetAction())
 		return nil
 	}
 	// - Services not managed by release-manager
@@ -109,12 +110,14 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		return errors.Wrap(err, "requesting describeArtifact from release manager")
 	}
 	if len(describeArtifactResponse.Artifacts) == 0 {
+		logger.Info().Msg("Filter UnmanagedRepo triggered")
 		return nil
 	}
 	// - Ignored repositories
 	if any(handler.repoFilters, func(filterRepo string) bool {
 		return filterRepo == repository.GetName()
 	}) {
+		logger.Info().Msg("Filter IgnoredRepo triggered")
 		return nil
 	}
 
@@ -142,8 +145,6 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		return errors.Wrapf(err, "creating bot message")
 	}
 
-	logger.Debug().Msgf("%s", botMessage)
-
 	// Send PR comment
 	client, err := handler.NewInstallationClient(installationID)
 	if err != nil {
@@ -161,6 +162,8 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, &newComment); err != nil {
 		return errors.Wrapf(err, "commenting on pull request, with DeliveryID '%v'", deliveryID)
 	}
+
+	logger.Debug().Msg("Comment created")
 
 	return nil
 }
