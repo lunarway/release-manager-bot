@@ -163,7 +163,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		return errors.Wrapf(err, "commenting on pull request, with DeliveryID '%v'", deliveryID)
 	}
 
-	logger.Debug().Msg("Comment created")
+	logger.Info().Msg("Comment created")
 
 	return nil
 }
