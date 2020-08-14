@@ -8,7 +8,9 @@ github-webhook:
 	-d '$(shell cat ${FILE})' \
 	$(URL)/webhook/github/bot
 
-
+prometheus-metrics:
+	curl -H 'user_agent: Prometheus/2.20.1' \
+	$(URL)/metrics
 
 start:
 	go build
