@@ -5,7 +5,6 @@ go 1.14
 require (
 	github.com/bluekeyes/hatpear v0.1.1
 	github.com/deathowl/go-metrics-prometheus v0.0.0-20200518174047-74482eab5bfb
-	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-github/v32 v32.0.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/kr/text v0.2.0 // indirect
@@ -18,7 +17,6 @@ require (
 	github.com/rs/zerolog v1.19.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
-	go.lunarway.com/metrics v0.0.0-20200731095407-dba3438d6b23
 	goji.io v2.0.2+incompatible
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
