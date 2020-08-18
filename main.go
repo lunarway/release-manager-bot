@@ -7,9 +7,13 @@ import (
 	"time"
 
 	"github.com/bluekeyes/hatpear"
+	prometheusmetrics "github.com/deathowl/go-metrics-prometheus"
 	"github.com/gregjones/httpcache"
 	"github.com/palantir/go-baseapp/baseapp"
 	"github.com/palantir/go-githubapp/githubapp"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rcrowley/go-metrics"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 	"github.com/spf13/pflag"
@@ -59,6 +63,15 @@ func main() {
 		return
 	}
 
+	// Metrics
+	metrics.DefaultRegistry = metrics.NewRegistry()
+
+	metricsRegistry := metrics.DefaultRegistry
+	prometheusClient := prometheusmetrics.NewPrometheusProvider(
+		metrics.DefaultRegistry, "misc", "r-m-b", prometheus.DefaultRegisterer, 1*time.Second)
+	go prometheusClient.UpdatePrometheusMetrics()
+
+	// Create http server
 	server, err := baseapp.NewServer(
 		httpServerConfig,
 		baseapp.WithLogger(logger),
@@ -70,6 +83,7 @@ func main() {
 			}),
 			hatpear.Catch(baseapp.HandleRouteError),
 			hatpear.Recover(),
+			baseapp.NewMetricsHandler(metricsRegistry),
 		),
 		baseapp.WithUTCNanoTime(),
 		baseapp.WithErrorLogging(baseapp.RichErrorMarshalFunc),
@@ -81,13 +95,14 @@ func main() {
 		return
 	}
 
+	// Create Github client
 	cc, err := githubapp.NewDefaultCachingClientCreator(
 		githubappConfig,
 		githubapp.WithClientUserAgent("release-managar-bot/1.0.0"),
 		githubapp.WithClientTimeout(3*time.Second),
 		githubapp.WithClientCaching(false, func() httpcache.Cache { return httpcache.NewMemoryCache() }),
 		githubapp.WithClientMiddleware(
-			githubapp.ClientMetrics(server.Registry()),
+			githubapp.ClientMetrics(metricsRegistry),
 		),
 	)
 	if err != nil {
@@ -107,6 +122,7 @@ func main() {
 	webhookHandler := githubapp.NewDefaultEventDispatcher(githubappConfig, pullRequestHandler)
 
 	server.Mux().Handle(pat.Post("/webhook/github/bot"), webhookHandler)
+	server.Mux().Handle(pat.Get("/metrics"), promhttp.Handler())
 
 	// Start is blocking
 	err = server.Start()
@@ -115,5 +131,4 @@ func main() {
 		os.Exit(1)
 		return
 	}
-
 }
