@@ -68,7 +68,7 @@ func main() {
 
 	metricsRegistry := metrics.DefaultRegistry
 	prometheusClient := prometheusmetrics.NewPrometheusProvider(
-		metrics.DefaultRegistry, "misc", "r-m-b", prometheus.DefaultRegisterer, 1*time.Second)
+		metrics.DefaultRegistry, "misc", "release-manager-bot", prometheus.DefaultRegisterer, 1*time.Second)
 	go prometheusClient.UpdatePrometheusMetrics()
 
 	// Create http server
