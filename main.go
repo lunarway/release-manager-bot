@@ -106,7 +106,7 @@ func main() {
 	httpHandler = addContextMiddleware(logger, httpHandler)
 
 	s := http.Server{
-		Addr:    fmt.Sprintf("localhost:%d", httpServerConfig.Port),
+		Addr:    fmt.Sprintf(":%d", httpServerConfig.Port),
 		Handler: httpHandler,
 	}
 
