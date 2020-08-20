@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/bluekeyes/hatpear v0.1.1
 	github.com/deathowl/go-metrics-prometheus v0.0.0-20200518174047-74482eab5bfb
+	github.com/go-kit/kit v0.9.0
 	github.com/google/go-github/v32 v32.0.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/kr/text v0.2.0 // indirect

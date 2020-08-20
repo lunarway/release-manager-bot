@@ -1,26 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"text/template"
 	"time"
 
-	"github.com/bluekeyes/hatpear"
-	prometheusmetrics "github.com/deathowl/go-metrics-prometheus"
 	"github.com/gregjones/httpcache"
 	"github.com/palantir/go-baseapp/baseapp"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rcrowley/go-metrics"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/hlog"
 	"github.com/spf13/pflag"
-	"goji.io/pat"
 )
 
 func main() {
+	// Logging
 	zerolog.TimestampFieldName = "@timestamp"
 	logger := zerolog.New(os.Stdout).With().
 		Timestamp().
@@ -31,6 +28,7 @@ func main() {
 		Str("log_type", "reqresp").
 		Logger()
 
+	// Flags
 	releaseManagerAuthToken := pflag.String("release-manager-auth-token", "", "auth token for accessing release manager")
 	releaseManagerURL := pflag.String("release-manager-url", "http://localhost:8080", "url to release manager")
 
@@ -44,9 +42,12 @@ func main() {
 	pflag.Int64Var(&githubappConfig.App.IntegrationID, "github-integration-id", 0, "github App ID (App->General->About->App ID)")
 	pflag.StringVar(&githubappConfig.App.WebhookSecret, "github-webhook-secret", "", "github webhook secret")
 	pflag.StringVar(&githubappConfig.App.PrivateKey, "github-private-key", "", "github app private key content")
+	githubWebhookRoute := pflag.String("github-webhook-route", "/webhook/github/bot", "route to listen for webhooks from Github")
 
 	messageTemplate := pflag.String("message-template", "'{{.Branch}}' will auto-release to: {{range .AutoReleaseEnvironments}}\n {{.}}{{end}}", "Template string used when commenting on pull requests on Github. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].")
 	repoFilter := pflag.StringSlice("ignored-repositories", []string{}, "Slice with names of repositories which the bot should not respond to.")
+
+	metricsRoute := pflag.String("metrics-route", "/metrics", "route to expect prometheus requests from")
 
 	pflag.Parse()
 
@@ -64,36 +65,7 @@ func main() {
 	}
 
 	// Metrics
-	metrics.DefaultRegistry = metrics.NewRegistry()
-
-	metricsRegistry := metrics.DefaultRegistry
-	prometheusClient := prometheusmetrics.NewPrometheusProvider(
-		metrics.DefaultRegistry, "misc", "release-manager-bot", prometheus.DefaultRegisterer, 1*time.Second)
-	go prometheusClient.UpdatePrometheusMetrics()
-
-	// Create http server
-	server, err := baseapp.NewServer(
-		httpServerConfig,
-		baseapp.WithLogger(logger),
-		baseapp.WithMiddleware(
-			hlog.NewHandler(logger),
-			hlog.RequestIDHandler("rid", "X-Request-ID"),
-			baseapp.AccessHandler(func(r *http.Request, status int, size int64, elapsed time.Duration) {
-				httpLogger.Info().Int64("responseTime", elapsed.Milliseconds()).Msgf("[%d] %s %s", status, r.Method, r.URL.String())
-			}),
-			hatpear.Catch(baseapp.HandleRouteError),
-			hatpear.Recover(),
-			baseapp.NewMetricsHandler(metricsRegistry),
-		),
-		baseapp.WithUTCNanoTime(),
-		baseapp.WithErrorLogging(baseapp.RichErrorMarshalFunc),
-		baseapp.WithMetrics(),
-	)
-	if err != nil {
-		logger.Error().Msgf("Failed to instatiate http server: %v", err)
-		os.Exit(1)
-		return
-	}
+	prometheusRegistry := prometheus.DefaultRegisterer
 
 	// Create Github client
 	cc, err := githubapp.NewDefaultCachingClientCreator(
@@ -102,7 +74,8 @@ func main() {
 		githubapp.WithClientTimeout(3*time.Second),
 		githubapp.WithClientCaching(false, func() httpcache.Cache { return httpcache.NewMemoryCache() }),
 		githubapp.WithClientMiddleware(
-			githubapp.ClientMetrics(metricsRegistry),
+			clientMetricsMiddleware(prometheusRegistry),
+			githubapp.ClientLogging(zerolog.DebugLevel),
 		),
 	)
 	if err != nil {
@@ -121,14 +94,22 @@ func main() {
 
 	webhookHandler := githubapp.NewDefaultEventDispatcher(githubappConfig, pullRequestHandler)
 
-	server.Mux().Handle(pat.Post("/webhook/github/bot"), webhookHandler)
-	server.Mux().Handle(pat.Get("/metrics"), promhttp.Handler())
+	// Create http server
+	mux := http.NewServeMux()
+	mux.Handle(*githubWebhookRoute, metricsMiddleware(prometheusRegistry, webhookHandler))
+	mux.Handle(*metricsRoute, promhttp.Handler())
 
-	// Start is blocking
-	err = server.Start()
-	if err != nil {
-		logger.Error().Msgf("Failed to serve: %v", err)
-		os.Exit(1)
-		return
+	// Middleware
+	httpHandler := loggerMiddleware(func(msg string, m map[string]interface{}) {
+		httpLogger.Info().Fields(m).Msg(msg)
+	}, mux)
+	httpHandler = addContextMiddleware(logger, httpHandler)
+
+	s := http.Server{
+		Addr:    fmt.Sprintf("localhost:%d", httpServerConfig.Port),
+		Handler: httpHandler,
 	}
+
+	// Serve
+	s.ListenAndServe()
 }

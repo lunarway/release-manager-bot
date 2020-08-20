@@ -67,6 +67,7 @@ type PRCreateHandler struct {
 	releaseManagerURL       string
 	messageTemplate         string
 	repoFilters             []string
+	logger                  zerolog.Logger
 }
 
 func (handler *PRCreateHandler) Handles() []string {
@@ -75,8 +76,6 @@ func (handler *PRCreateHandler) Handles() []string {
 
 // Handler
 func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryID string, payload []byte) error {
-	zerolog.Ctx(ctx).Info().Msgf("Handling deliveryID: '%s', eventType '%s'", deliveryID, eventType)
-
 	// Recieve webhook
 	var event github.PullRequestEvent
 
@@ -88,7 +87,17 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	prNum := event.GetNumber()
 	installationID := githubapp.GetInstallationIDFromEvent(&event)
 
-	ctx, logger := githubapp.PreparePRContext(ctx, installationID, repository, prNum)
+	logctx := zerolog.Ctx(ctx).With()
+	logctx = logctx.Int64("github_installation_id", installationID)
+	logctx = logctx.Str("github_repository_owner", repository.GetOwner().GetLogin())
+	logctx = logctx.Str("github_repository_name", repository.GetName())
+	logctx = logctx.Int("github_pr_num", prNum)
+
+	logger := logctx.Logger()
+	ctx = logger.WithContext(ctx)
+	//ctx, logger := githubapp.PreparePRContext(ctx, installationID, repository, prNum)
+
+	logger.Info().Msgf("Handling deliveryID: '%s', eventType '%s'", deliveryID, eventType)
 
 	prBase := event.GetPullRequest().GetBase().GetRef() // The branch which the pull request is ending.
 	serviceName := event.GetRepo().GetName()
