@@ -97,15 +97,38 @@ func (fn roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return fn(r)
 }
 
-func clientMetricsMiddleware(promRegisterer prometheus.Registerer) githubapp.ClientMiddleware {
+func clientMetricsMiddleware(promRegisterer prometheus.Registerer, requestDestination string) func(http.RoundTripper) http.RoundTripper {
 
 	metricHTTPRequestsStatus := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "outbound_http_status_code_total",
-			Help: "Counter of HTTP status codes of outbound HTTP requests",
+			Name:        "outbound_http_status_code_total",
+			Help:        "Counter of HTTP status codes of outbound HTTP requests",
+			ConstLabels: prometheus.Labels{"destination": requestDestination},
 		},
-		[]string{"status_code"},
+		[]string{"status_code", "destination"},
 	)
+
+	promRegisterer.MustRegister(metricHTTPRequestsStatus)
+
+	return func(next http.RoundTripper) http.RoundTripper {
+		return roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+
+			res, err := next.RoundTrip(r)
+			if err != nil {
+				return res, err
+			}
+			if res == nil {
+				return res, err
+			}
+
+			metricHTTPRequestsStatus.WithLabelValues(strconv.Itoa(res.StatusCode)).Inc()
+
+			return res, err
+		})
+	}
+}
+
+func githubMetricsMiddleware(promRegisterer prometheus.Registerer) githubapp.ClientMiddleware {
 
 	// Headers from https://developer.github.com/v3/#rate-limiting
 	metricGithubRatelimitLimit := prometheus.NewGauge(
@@ -126,8 +149,13 @@ func clientMetricsMiddleware(promRegisterer prometheus.Registerer) githubapp.Cli
 			Help: "Gauge of Github X-RateLimit-Reset header",
 		},
 	)
+	metricGithubRatelimitErrors := prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "github_ratelimit_errors",
+			Help: "Counter of errors retrieving the X-RateLimit-?? headers",
+		},
+	)
 
-	promRegisterer.MustRegister(metricHTTPRequestsStatus)
 	promRegisterer.MustRegister(metricGithubRatelimitLimit)
 	promRegisterer.MustRegister(metricGithubRatelimitRemaining)
 	promRegisterer.MustRegister(metricGithubRatelimitReset)
@@ -135,36 +163,32 @@ func clientMetricsMiddleware(promRegisterer prometheus.Registerer) githubapp.Cli
 	return func(next http.RoundTripper) http.RoundTripper {
 		return roundTripperFunc(func(r *http.Request) (*http.Response, error) {
 
-			/* installationID, ok := r.Context().Value("installationID").(int64)
-			if !ok {
-				installationID = 0
-			} */
-
 			res, err := next.RoundTrip(r)
 			if err != nil {
-				// todo
+				return res, err
+			}
+			if res == nil {
+				return res, err
 			}
 
-			if res != nil {
-
-				githubRatelimitLimit, err := strconv.ParseFloat(res.Header.Get("X-RateLimit-Limit"), 64)
-				if err != nil {
-					// todo
-				}
-
-				githubRatelimitRemaining, err := strconv.ParseFloat(res.Header.Get("X-RateLimit-Remaining"), 64)
-				if err != nil {
-					// todo
-				}
-
-				githubRatelimitReset, err := strconv.ParseFloat(res.Header.Get("X-RateLimit-Reset"), 64)
-				if err != nil {
-					// todo
-				}
-
-				metricHTTPRequestsStatus.WithLabelValues(strconv.Itoa(res.StatusCode)).Inc()
+			githubRatelimitLimit, err := strconv.ParseFloat(res.Header.Get("X-RateLimit-Limit"), 64)
+			if err != nil {
+				metricGithubRatelimitErrors.Inc()
+			} else {
 				metricGithubRatelimitLimit.Set(githubRatelimitLimit)
+			}
+
+			githubRatelimitRemaining, err := strconv.ParseFloat(res.Header.Get("X-RateLimit-Remaining"), 64)
+			if err != nil {
+				metricGithubRatelimitErrors.Inc()
+			} else {
 				metricGithubRatelimitRemaining.Set(githubRatelimitRemaining)
+			}
+
+			githubRatelimitReset, err := strconv.ParseFloat(res.Header.Get("X-RateLimit-Reset"), 64)
+			if err != nil {
+				metricGithubRatelimitErrors.Inc()
+			} else {
 				metricGithubRatelimitReset.Set(githubRatelimitReset)
 			}
 
