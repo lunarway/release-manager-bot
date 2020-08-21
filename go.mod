@@ -3,9 +3,6 @@ module github.com/lunarway/release-manager-bot
 go 1.14
 
 require (
-	github.com/bluekeyes/hatpear v0.1.1
-	github.com/deathowl/go-metrics-prometheus v0.0.0-20200518174047-74482eab5bfb
-	github.com/go-kit/kit v0.9.0
 	github.com/google/go-github/v32 v32.0.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/kr/text v0.2.0 // indirect
@@ -14,11 +11,9 @@ require (
 	github.com/palantir/go-githubapp v0.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
-	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/rs/zerolog v1.19.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
-	goji.io v2.0.2+incompatible
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
 )
