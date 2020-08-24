@@ -151,7 +151,7 @@ func githubMetricsMiddleware(promRegisterer prometheus.Registerer) githubapp.Cli
 	)
 	metricGithubRatelimitErrors := prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "github_ratelimit_errors",
+			Name: "github_ratelimit_errors_total",
 			Help: "Counter of errors retrieving the X-RateLimit-?? headers",
 		},
 	)
