@@ -39,15 +39,15 @@ func loggerMiddleware(logger LoggerFunc, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		statusWriter := &statusCodeResponseWriter{w, http.StatusOK}
 		start := time.Now()
+
 		h.ServeHTTP(statusWriter, r)
 
-		// request duration in miliseconds
-		duration := time.Since(start).Milliseconds()
+		requestDuration := time.Since(start).Milliseconds()
 		statusCode := statusWriter.statusCode
 
 		logMessage := fmt.Sprintf("[%d] %s %s", statusCode, r.Method, r.URL.String())
 		logMap := map[string]interface{}{
-			"responseTime": fmt.Sprintf("%d", duration),
+			"responseTime": fmt.Sprintf("%d", requestDuration),
 		}
 
 		logger(logMessage, logMap)
@@ -63,19 +63,29 @@ func inboundMetricsMiddleware(promRegisterer prometheus.Registerer, h http.Handl
 		},
 		[]string{"status_code", "method"},
 	)
+
+	millisBuckets := []float64{1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000}
+	httpRequestsDuration := prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "inbound_http_duration_milliseconds",
+			Help:    "Histogram of response latency (in milliseconds) of inbound requests",
+			Buckets: millisBuckets,
+		})
+
 	promRegisterer.MustRegister(httpRequests)
+	promRegisterer.MustRegister(httpRequestsDuration)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		statusWriter := &statusCodeResponseWriter{w, http.StatusOK}
-		//start := time.Now()
+		start := time.Now()
+
 		h.ServeHTTP(statusWriter, r)
 
-		// request duration in miliseconds
-		//duration := time.Since(start).Nanoseconds() / 1e6
+		requestDuration := time.Since(start).Milliseconds()
 		statusCode := statusWriter.statusCode
 
 		httpRequests.WithLabelValues(strconv.Itoa(statusCode), r.Method).Inc()
-
+		httpRequestsDuration.Observe(float64(requestDuration))
 	})
 }
 
