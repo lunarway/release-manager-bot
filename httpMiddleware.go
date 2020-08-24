@@ -64,7 +64,7 @@ func inboundMetricsMiddleware(promRegisterer prometheus.Registerer, h http.Handl
 		[]string{"status_code", "method"},
 	)
 
-	millisBuckets := []float64{1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000}
+	millisBuckets := []float64{5, 10, 50, 100, 250, 500, 1000, 1500, 2000, 3000, 4000, 5000, 10000}
 	httpRequestsDuration := prometheus.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:    "inbound_http_duration_milliseconds",
