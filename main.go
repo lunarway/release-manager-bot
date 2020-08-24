@@ -74,8 +74,8 @@ func main() {
 		githubapp.WithClientTimeout(3*time.Second),
 		githubapp.WithClientCaching(false, func() httpcache.Cache { return httpcache.NewMemoryCache() }),
 		githubapp.WithClientMiddleware(
+			githubapp.ClientLogging(zerolog.DebugLevel),
 			clientMetricsMiddleware(prometheusRegistry, "github"),
-			//githubapp.ClientLogging(zerolog.DebugLevel),
 			githubMetricsMiddleware(prometheusRegistry),
 		),
 	)
