@@ -29,7 +29,7 @@ func InitializeResponder(ctx context.Context) context.Context {
 type responderKey struct{}
 type LoggerFunc func(msg string, m map[string]interface{})
 
-func addContextMiddleware(logger zerolog.Logger, h http.Handler) http.Handler {
+func loggingContextMiddleware(logger zerolog.Logger, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := logger.With()
 

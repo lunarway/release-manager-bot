@@ -105,7 +105,7 @@ func main() {
 	httpHandler := loggerMiddleware(func(msg string, m map[string]interface{}) {
 		httpLogger.Info().Fields(m).Msg(msg)
 	}, mux)
-	httpHandler = addContextMiddleware(logger, httpHandler)
+	httpHandler = loggingContextMiddleware(logger, httpHandler)
 
 	s := http.Server{
 		Addr:    fmt.Sprintf(":%d", httpServerConfig.Port),
