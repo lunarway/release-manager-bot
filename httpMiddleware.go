@@ -159,6 +159,7 @@ func githubMetricsMiddleware(promRegisterer prometheus.Registerer) githubapp.Cli
 	promRegisterer.MustRegister(metricGithubRatelimitLimit)
 	promRegisterer.MustRegister(metricGithubRatelimitRemaining)
 	promRegisterer.MustRegister(metricGithubRatelimitReset)
+	promRegisterer.MustRegister(metricGithubRatelimitErrors)
 
 	return func(next http.RoundTripper) http.RoundTripper {
 		return roundTripperFunc(func(r *http.Request) (*http.Response, error) {
