@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -21,12 +20,7 @@ func (w *statusCodeResponseWriter) WriteHeader(code int) {
 	w.statusCode = code
 	w.ResponseWriter.WriteHeader(code)
 }
-func InitializeResponder(ctx context.Context) context.Context {
-	var responder func(http.ResponseWriter, *http.Request)
-	return context.WithValue(ctx, responderKey{}, &responder)
-}
 
-type responderKey struct{}
 type LoggerFunc func(msg string, m map[string]interface{})
 
 func loggingContextMiddleware(logger zerolog.Logger, h http.Handler) http.Handler {
