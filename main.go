@@ -30,7 +30,7 @@ func main() {
 
 	// Flags
 	releaseManagerAuthToken := pflag.String("release-manager-auth-token", "", "auth token for accessing release manager")
-	releaseManagerURL := pflag.String("release-manager-url", "http://localhost:8080", "url to release manager")
+	releaseManagerURL := pflag.String("release-manager-url", "http://localhost:8080", "url to release manager; without '/' at the end")
 
 	var httpServerConfig baseapp.HTTPConfig
 	pflag.StringVar(&httpServerConfig.Address, "http-address", "localhost", "http listen address")
@@ -74,8 +74,9 @@ func main() {
 		githubapp.WithClientTimeout(3*time.Second),
 		githubapp.WithClientCaching(false, func() httpcache.Cache { return httpcache.NewMemoryCache() }),
 		githubapp.WithClientMiddleware(
+			clientMetricsMiddleware(prometheusRegistry, "github"),
+			//githubapp.ClientLogging(zerolog.DebugLevel),
 			githubMetricsMiddleware(prometheusRegistry),
-			githubapp.ClientLogging(zerolog.DebugLevel),
 		),
 	)
 	if err != nil {
@@ -85,18 +86,19 @@ func main() {
 	}
 
 	pullRequestHandler := &PRCreateHandler{
-		ClientCreator:           cc,
-		releaseManagerAuthToken: *releaseManagerAuthToken,
-		releaseManagerURL:       *releaseManagerURL,
-		messageTemplate:         *messageTemplate,
-		repoFilters:             *repoFilter,
+		ClientCreator:                   cc,
+		releaseManagerMetricsMiddleware: clientMetricsMiddleware(prometheusRegistry, "release-manager")(http.DefaultTransport),
+		releaseManagerAuthToken:         *releaseManagerAuthToken,
+		releaseManagerURL:               *releaseManagerURL,
+		messageTemplate:                 *messageTemplate,
+		repoFilters:                     *repoFilter,
 	}
 
 	webhookHandler := githubapp.NewDefaultEventDispatcher(githubappConfig, pullRequestHandler)
 
 	// Create http server
 	mux := http.NewServeMux()
-	mux.Handle(*githubWebhookRoute, metricsMiddleware(prometheusRegistry, webhookHandler))
+	mux.Handle(*githubWebhookRoute, inboundMetricsMiddleware(prometheusRegistry, webhookHandler))
 	mux.Handle(*metricsRoute, promhttp.Handler())
 
 	// Middleware

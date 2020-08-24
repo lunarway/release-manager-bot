@@ -65,11 +65,11 @@ func loggerMiddleware(logger LoggerFunc, h http.Handler) http.Handler {
 	})
 }
 
-func metricsMiddleware(promRegisterer prometheus.Registerer, h http.Handler) http.Handler {
+func inboundMetricsMiddleware(promRegisterer prometheus.Registerer, h http.Handler) http.Handler {
 
 	httpRequests := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "inbound_http_status_code",
+			Name: "inbound_http_status_code_total",
 			Help: "Counter of HTTP status codes of inbound HTTP requests",
 		},
 		[]string{"status_code", "method"},
@@ -105,7 +105,7 @@ func clientMetricsMiddleware(promRegisterer prometheus.Registerer, requestDestin
 			Help:        "Counter of HTTP status codes of outbound HTTP requests",
 			ConstLabels: prometheus.Labels{"destination": requestDestination},
 		},
-		[]string{"status_code", "destination"},
+		[]string{"status_code"},
 	)
 
 	promRegisterer.MustRegister(metricHTTPRequestsStatus)

@@ -24,8 +24,8 @@ func any(vs []string, f func(string) bool) bool {
 	return false
 }
 
-func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger) error {
-	httpClient := &http.Client{}
+func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger, metricMiddleware http.RoundTripper) error {
+	httpClient := &http.Client{Transport: metricMiddleware}
 
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
@@ -63,11 +63,12 @@ type PRCreateHandler struct {
 	githubapp.ClientCreator
 	preamble string
 
-	releaseManagerAuthToken string
-	releaseManagerURL       string
-	messageTemplate         string
-	repoFilters             []string
-	logger                  zerolog.Logger
+	releaseManagerMetricsMiddleware http.RoundTripper
+	releaseManagerAuthToken         string
+	releaseManagerURL               string
+	messageTemplate                 string
+	repoFilters                     []string
+	logger                          zerolog.Logger
 }
 
 func (handler *PRCreateHandler) Handles() []string {
@@ -114,7 +115,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	}
 	// - Services not managed by release-manager
 	var describeArtifactResponse DescribeArtifactResponse
-	err := retrieveFromReleaseManager(describeArtifactPath+serviceName, handler.releaseManagerAuthToken, &describeArtifactResponse, logger)
+	err := retrieveFromReleaseManager(describeArtifactPath+serviceName, handler.releaseManagerAuthToken, &describeArtifactResponse, logger, handler.releaseManagerMetricsMiddleware)
 	if err != nil {
 		return errors.Wrap(err, "requesting describeArtifact from release manager")
 	}
@@ -132,7 +133,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	// Get policies
 	var policyResponse ListPoliciesResponse
-	err = retrieveFromReleaseManager(policyPath+serviceName, handler.releaseManagerAuthToken, &policyResponse, logger)
+	err = retrieveFromReleaseManager(policyPath+serviceName, handler.releaseManagerAuthToken, &policyResponse, logger, handler.releaseManagerMetricsMiddleware)
 	if err != nil {
 		return errors.Wrap(err, "requesting policy from release manager")
 	}
