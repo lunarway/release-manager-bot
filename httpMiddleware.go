@@ -106,12 +106,26 @@ func clientMetricsMiddleware(promRegisterer prometheus.Registerer, requestDestin
 		[]string{"status_code"},
 	)
 
+	millisBuckets := []float64{5, 10, 25, 50, 100, 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 3000, 5000, 10000}
+	httpRequestsDuration := prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:        "outbound_http_duration_milliseconds",
+			Help:        "Histogram of response latency (in milliseconds) of outbound requests",
+			Buckets:     millisBuckets,
+			ConstLabels: prometheus.Labels{"destination": requestDestination},
+		})
+
 	promRegisterer.MustRegister(metricHTTPRequestsStatus)
+	promRegisterer.MustRegister(httpRequestsDuration)
 
 	return func(next http.RoundTripper) http.RoundTripper {
 		return roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+			start := time.Now()
 
 			res, err := next.RoundTrip(r)
+
+			requestDuration := time.Since(start).Milliseconds()
+
 			if err != nil {
 				return res, err
 			}
@@ -120,6 +134,7 @@ func clientMetricsMiddleware(promRegisterer prometheus.Registerer, requestDestin
 			}
 
 			metricHTTPRequestsStatus.WithLabelValues(strconv.Itoa(res.StatusCode)).Inc()
+			httpRequestsDuration.Observe(float64(requestDuration))
 
 			return res, err
 		})
