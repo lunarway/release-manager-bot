@@ -113,5 +113,9 @@ func main() {
 	}
 
 	// Serve
-	s.ListenAndServe()
+	err = s.ListenAndServe()
+	if err != nil {
+		logger.Error().Msgf("Failed to serve: %v", err)
+		os.Exit(1)
+	}
 }
