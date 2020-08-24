@@ -90,7 +90,6 @@ func inboundMetricsMiddleware(promRegisterer prometheus.Registerer, h http.Handl
 }
 
 type roundTripperFunc func(*http.Request) (*http.Response, error)
-type ClientMiddleware func(http.RoundTripper) http.RoundTripper
 
 func (fn roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return fn(r)
