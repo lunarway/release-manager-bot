@@ -96,7 +96,6 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	logger := logctx.Logger()
 	ctx = logger.WithContext(ctx)
-	//ctx, logger := githubapp.PreparePRContext(ctx, installationID, repository, prNum)
 
 	logger.Info().Msgf("Handling deliveryID: '%s', eventType '%s'", deliveryID, eventType)
 
