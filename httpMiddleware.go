@@ -48,7 +48,7 @@ func loggerMiddleware(logger LoggerFunc, h http.Handler) http.Handler {
 		h.ServeHTTP(statusWriter, r)
 
 		// request duration in miliseconds
-		duration := time.Since(start).Nanoseconds() / 1e6
+		duration := time.Since(start).Milliseconds()
 		statusCode := statusWriter.statusCode
 
 		logMessage := fmt.Sprintf("[%d] %s %s", statusCode, r.Method, r.URL.String())
