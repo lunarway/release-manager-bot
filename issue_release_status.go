@@ -88,11 +88,11 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	prNum := event.GetNumber()
 	installationID := githubapp.GetInstallationIDFromEvent(&event)
 
-	logctx := zerolog.Ctx(ctx).With()
-	logctx = logctx.Int64("github_installation_id", installationID)
-	logctx = logctx.Str("github_repository_owner", repository.GetOwner().GetLogin())
-	logctx = logctx.Str("github_repository_name", repository.GetName())
-	logctx = logctx.Int("github_pr_num", prNum)
+	logctx := zerolog.Ctx(ctx).With().
+		Int64("github_installation_id", installationID).
+		Str("github_repository_owner", repository.GetOwner().GetLogin()).
+		Str("github_repository_name", repository.GetName()).
+		Int("github_pr_num", prNum)
 
 	logger := logctx.Logger()
 	ctx = logger.WithContext(ctx)
