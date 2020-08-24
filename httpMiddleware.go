@@ -134,19 +134,19 @@ func githubMetricsMiddleware(promRegisterer prometheus.Registerer) githubapp.Cli
 	metricGithubRatelimitLimit := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "github_ratelimit_limit_info",
-			Help: "Gauge of Github X-RateLimit-Limit header",
+			Help: "Gauge of Github X-RateLimit-Limit header. The maximum number of requests you're permitted to make per hour",
 		},
 	)
 	metricGithubRatelimitRemaining := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "github_ratelimit_remaining_info",
-			Help: "Gauge of Github X-RateLimit-Remaining header",
+			Help: "Gauge of Github X-RateLimit-Remaining header. The number of requests remaining in the current rate limit window",
 		},
 	)
 	metricGithubRatelimitReset := prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Name: "github_ratelimit_reset_info",
-			Help: "Gauge of Github X-RateLimit-Reset header",
+			Name: "github_ratelimit_reset_UNIX_time",
+			Help: "Gauge of Github X-RateLimit-Reset header. The time at which the current rate limit window resets in UTC epoch seconds",
 		},
 	)
 	metricGithubRatelimitErrors := prometheus.NewCounter(
