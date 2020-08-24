@@ -108,7 +108,7 @@ func main() {
 	httpHandler = loggingContextMiddleware(logger, httpHandler)
 
 	s := http.Server{
-		Addr:    fmt.Sprintf(":%d", httpServerConfig.Port),
+		Addr:    net.JoinHostPort("", strconv.Itoa(httpServerConfig.Port)),
 		Handler: httpHandler,
 	}
 
