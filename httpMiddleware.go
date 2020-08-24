@@ -31,12 +31,7 @@ type LoggerFunc func(msg string, m map[string]interface{})
 
 func addContextMiddleware(logger zerolog.Logger, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//eventType := r.Header.Get("X-GitHub-Event")
-		//deliveryID := r.Header.Get("X-GitHub-Delivery")
-
 		ctx := logger.With()
-		//ctx = ctx.Str("github_event_type", eventType)
-		//ctx = ctx.Str("github_delivery_id", deliveryID)
 
 		l := ctx.Logger()
 
