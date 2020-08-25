@@ -2,3 +2,5 @@
 /release-manager-bot
 /dist
 /payload.json
+header.txt
+changeBasePayload.json

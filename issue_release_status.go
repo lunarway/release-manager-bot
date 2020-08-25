@@ -24,8 +24,8 @@ func any(vs []string, f func(string) bool) bool {
 	return false
 }
 
-func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger) error {
-	httpClient := &http.Client{}
+func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger, metricMiddleware http.RoundTripper) error {
+	httpClient := &http.Client{Transport: metricMiddleware}
 
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
@@ -63,10 +63,12 @@ type PRCreateHandler struct {
 	githubapp.ClientCreator
 	preamble string
 
-	releaseManagerAuthToken string
-	releaseManagerURL       string
-	messageTemplate         string
-	repoFilters             []string
+	releaseManagerMetricsMiddleware http.RoundTripper
+	releaseManagerAuthToken         string
+	releaseManagerURL               string
+	messageTemplate                 string
+	repoFilters                     []string
+	logger                          zerolog.Logger
 }
 
 func (handler *PRCreateHandler) Handles() []string {
@@ -75,8 +77,6 @@ func (handler *PRCreateHandler) Handles() []string {
 
 // Handler
 func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryID string, payload []byte) error {
-	zerolog.Ctx(ctx).Info().Msgf("Handling deliveryID: '%s', eventType '%s'", deliveryID, eventType)
-
 	// Recieve webhook
 	var event github.PullRequestEvent
 
@@ -88,7 +88,16 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	prNum := event.GetNumber()
 	installationID := githubapp.GetInstallationIDFromEvent(&event)
 
-	ctx, logger := githubapp.PreparePRContext(ctx, installationID, repository, prNum)
+	logctx := zerolog.Ctx(ctx).With().
+		Int64("github_installation_id", installationID).
+		Str("github_repository_owner", repository.GetOwner().GetLogin()).
+		Str("github_repository_name", repository.GetName()).
+		Int("github_pr_num", prNum)
+
+	logger := logctx.Logger()
+	ctx = logger.WithContext(ctx)
+
+	logger.Info().Msgf("Handling deliveryID: '%s', eventType '%s'", deliveryID, eventType)
 
 	prBase := event.GetPullRequest().GetBase().GetRef() // The branch which the pull request is ending.
 	serviceName := event.GetRepo().GetName()
@@ -105,7 +114,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	}
 	// - Services not managed by release-manager
 	var describeArtifactResponse DescribeArtifactResponse
-	err := retrieveFromReleaseManager(describeArtifactPath+serviceName, handler.releaseManagerAuthToken, &describeArtifactResponse, logger)
+	err := retrieveFromReleaseManager(describeArtifactPath+serviceName, handler.releaseManagerAuthToken, &describeArtifactResponse, logger, handler.releaseManagerMetricsMiddleware)
 	if err != nil {
 		return errors.Wrap(err, "requesting describeArtifact from release manager")
 	}
@@ -123,7 +132,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	// Get policies
 	var policyResponse ListPoliciesResponse
-	err = retrieveFromReleaseManager(policyPath+serviceName, handler.releaseManagerAuthToken, &policyResponse, logger)
+	err = retrieveFromReleaseManager(policyPath+serviceName, handler.releaseManagerAuthToken, &policyResponse, logger, handler.releaseManagerMetricsMiddleware)
 	if err != nil {
 		return errors.Wrap(err, "requesting policy from release manager")
 	}
