@@ -158,7 +158,7 @@ func githubMetricsMiddleware(promRegisterer prometheus.Registerer) githubapp.Cli
 	)
 	metricGithubRatelimitReset := prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Name: "github_ratelimit_reset_UNIX_time",
+			Name: "github_ratelimit_reset_unix_time_info",
 			Help: "Gauge of Github X-RateLimit-Reset header. The time at which the current rate limit window resets in UTC epoch seconds",
 		},
 	)
