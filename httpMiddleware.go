@@ -181,9 +181,6 @@ func githubMetricsMiddleware(promRegisterer prometheus.Registerer) githubapp.Cli
 			if err != nil {
 				return res, err
 			}
-			if res == nil {
-				return res, err
-			}
 
 			githubRatelimitLimit, err := strconv.ParseFloat(res.Header.Get("X-RateLimit-Limit"), 64)
 			if err != nil {
