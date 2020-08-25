@@ -24,6 +24,12 @@ func any(vs []string, f func(string) bool) bool {
 	return false
 }
 
+func trimServiceName(original string) string {
+	serviceName := strings.TrimSuffix(original, "-service")
+	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
+	return serviceName
+}
+
 func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger, metricMiddleware http.RoundTripper) error {
 	httpClient := &http.Client{Transport: metricMiddleware}
 
@@ -69,6 +75,7 @@ type PRCreateHandler struct {
 	messageTemplate                 string
 	repoFilters                     []string
 	logger                          zerolog.Logger
+	repoToServiceMap                map[string]string
 }
 
 func (handler *PRCreateHandler) Handles() []string {
@@ -99,12 +106,23 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	logger.Info().Msgf("Handling deliveryID: '%s', eventType '%s'", deliveryID, eventType)
 
-	prBase := event.GetPullRequest().GetBase().GetRef() // The branch which the pull request is ending.
-	serviceName := event.GetRepo().GetName()
-	serviceName = strings.TrimSuffix(serviceName, "-service")
-	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
+	// Get info from event
+	prBase := event.GetPullRequest().GetBase().GetRef()
 	policyPath := handler.releaseManagerURL + "/policies?service="
 	describeArtifactPath := handler.releaseManagerURL + "/describe/artifact/"
+
+	// Get service name
+	var serviceName string
+	if handler.repoToServiceMap != nil {
+		_, ok := handler.repoToServiceMap[event.GetRepo().GetName()]
+		if ok == true {
+			serviceName = handler.repoToServiceMap[event.GetRepo().GetName()]
+		} else {
+			serviceName = trimServiceName(event.GetRepo().GetName())
+		}
+	} else {
+		serviceName = trimServiceName(event.GetRepo().GetName())
+	}
 
 	// Filters - Consider using Chain of Responsibility for this if it gets bloated.
 	// - Action type
