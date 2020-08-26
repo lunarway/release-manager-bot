@@ -14,50 +14,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Util
-func any(vs []string, f func(string) bool) bool {
-	for _, v := range vs {
-		if f(v) {
-			return true
-		}
-	}
-	return false
-}
-
-func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger, metricMiddleware http.RoundTripper) error {
-	httpClient := &http.Client{Transport: metricMiddleware}
-
-	req, err := http.NewRequest("GET", endpoint, nil)
-	if err != nil {
-		return errors.Wrapf(err, "create GET request for release-manager endpoint '%s'", endpoint)
-	}
-
-	req.Header.Add("Authorization", "Bearer "+authToken)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "sending HTTP request")
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return errors.Wrap(err, "reading release-manager HTTP response body")
-	}
-
-	if resp.StatusCode != 200 {
-		logger.Info().Msgf("Request body: %v", body)
-		return errors.Errorf("expected status code 200, but recieved " + fmt.Sprintf("%v", resp.StatusCode))
-	}
-
-	err = json.Unmarshal(body, output)
-	if err != nil {
-		return errors.Wrap(err, "parsing release-manager HTTP response body as json")
-	}
-
-	return nil
-}
-
 // Structs
 type PRCreateHandler struct {
 	githubapp.ClientCreator
@@ -193,4 +149,48 @@ func trimServiceName(original string) string {
 	serviceName := strings.TrimSuffix(original, "-service")
 	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
 	return serviceName
+}
+
+func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger, metricMiddleware http.RoundTripper) error {
+	httpClient := &http.Client{Transport: metricMiddleware}
+
+	req, err := http.NewRequest("GET", endpoint, nil)
+	if err != nil {
+		return errors.Wrapf(err, "create GET request for release-manager endpoint '%s'", endpoint)
+	}
+
+	req.Header.Add("Authorization", "Bearer "+authToken)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "sending HTTP request")
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "reading release-manager HTTP response body")
+	}
+
+	if resp.StatusCode != 200 {
+		logger.Info().Msgf("Request body: %v", body)
+		return errors.Errorf("expected status code 200, but recieved " + fmt.Sprintf("%v", resp.StatusCode))
+	}
+
+	err = json.Unmarshal(body, output)
+	if err != nil {
+		return errors.Wrap(err, "parsing release-manager HTTP response body as json")
+	}
+
+	return nil
+}
+
+// Util
+func any(vs []string, f func(string) bool) bool {
+	for _, v := range vs {
+		if f(v) {
+			return true
+		}
+	}
+	return false
 }
