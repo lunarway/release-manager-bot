@@ -115,7 +115,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	// - Edited; but no change in base branch
 	if event.GetAction() == "edited" {
 		if event.Changes == nil {
-			logger.Info().Msg("Filter NoChanges triggered") // Check in some weeks if this state has every been triggered 25/08/2020
+			logger.Info().Msg("Filter NoChanges triggered") // Check in some weeks if this state has ever been triggered 25/08/2020
 			return nil
 		} else if event.Changes.Base == nil { // to prevent nil dereference
 			logger.Info().Msg("Filter NoBaseChanges triggered")
