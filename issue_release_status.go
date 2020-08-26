@@ -114,9 +114,9 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	// Get service name
 	var serviceName string
 	if handler.repoToServiceMap != nil {
-		_, ok := handler.repoToServiceMap[event.GetRepo().GetName()]
+		assignedName, ok := handler.repoToServiceMap[event.GetRepo().GetName()]
 		if ok == true {
-			serviceName = handler.repoToServiceMap[event.GetRepo().GetName()]
+			serviceName = assignedName
 		} else {
 			serviceName = trimServiceName(event.GetRepo().GetName())
 		}
