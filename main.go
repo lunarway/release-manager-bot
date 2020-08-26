@@ -46,8 +46,8 @@ func main() {
 	githubWebhookRoute := pflag.String("github-webhook-route", "/webhook/github/bot", "route to listen for webhooks from Github")
 
 	messageTemplate := pflag.String("message-template", "'{{.Branch}}' will auto-release to: {{range .AutoReleaseEnvironments}}\n {{.}}{{end}}", "Template string used when commenting on pull requests on Github. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].")
-	repoFilter := pflag.StringSlice("ignored-repositories", []string{}, "Slice with names of repositories which the bot should not respond to.")
-
+	repoFilter := pflag.StringSlice("ignored-repositories", []string{}, "Slice with names of repositories which the bot should not respond to")
+	repoToServiceMap := pflag.StringToString("map-repo-to-service", map[string]string{}, "Map where key is repo name and value is assigned/interpreted service name. Ex. usage: '--map-repo-to-service=repo1=service1,repo2=service2'")
 	metricsRoute := pflag.String("metrics-route", "/metrics", "route to expect prometheus requests from")
 
 	pflag.Parse()
@@ -93,6 +93,7 @@ func main() {
 		releaseManagerURL:               *releaseManagerURL,
 		messageTemplate:                 *messageTemplate,
 		repoFilters:                     *repoFilter,
+		repoToServiceMap:                *repoToServiceMap,
 	}
 
 	webhookHandler := githubapp.NewDefaultEventDispatcher(githubappConfig, pullRequestHandler)

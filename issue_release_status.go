@@ -14,50 +14,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Util
-func any(vs []string, f func(string) bool) bool {
-	for _, v := range vs {
-		if f(v) {
-			return true
-		}
-	}
-	return false
-}
-
-func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger, metricMiddleware http.RoundTripper) error {
-	httpClient := &http.Client{Transport: metricMiddleware}
-
-	req, err := http.NewRequest("GET", endpoint, nil)
-	if err != nil {
-		return errors.Wrapf(err, "create GET request for release-manager endpoint '%s'", endpoint)
-	}
-
-	req.Header.Add("Authorization", "Bearer "+authToken)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "sending HTTP request")
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return errors.Wrap(err, "reading release-manager HTTP response body")
-	}
-
-	if resp.StatusCode != 200 {
-		logger.Info().Msgf("Request body: %v", body)
-		return errors.Errorf("expected status code 200, but recieved " + fmt.Sprintf("%v", resp.StatusCode))
-	}
-
-	err = json.Unmarshal(body, output)
-	if err != nil {
-		return errors.Wrap(err, "parsing release-manager HTTP response body as json")
-	}
-
-	return nil
-}
-
 // Structs
 type PRCreateHandler struct {
 	githubapp.ClientCreator
@@ -69,6 +25,7 @@ type PRCreateHandler struct {
 	messageTemplate                 string
 	repoFilters                     []string
 	logger                          zerolog.Logger
+	repoToServiceMap                map[string]string
 }
 
 func (handler *PRCreateHandler) Handles() []string {
@@ -99,12 +56,13 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	logger.Info().Msgf("Handling deliveryID: '%s', eventType '%s'", deliveryID, eventType)
 
-	prBase := event.GetPullRequest().GetBase().GetRef() // The branch which the pull request is ending.
-	serviceName := event.GetRepo().GetName()
-	serviceName = strings.TrimSuffix(serviceName, "-service")
-	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
+	// Get info from event
+	prBase := event.GetPullRequest().GetBase().GetRef()
 	policyPath := handler.releaseManagerURL + "/policies?service="
 	describeArtifactPath := handler.releaseManagerURL + "/describe/artifact/"
+
+	// Get service name
+	serviceName := getServiceName(event.GetRepo().GetName(), handler.repoToServiceMap)
 
 	// Filters - Consider using Chain of Responsibility for this if it gets bloated.
 	// - Action type
@@ -185,4 +143,64 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	logger.Info().Msgf("Comment created on %s PR %d", repositoryName, *event.PullRequest.Number)
 
 	return nil
+}
+
+func getServiceName(repoName string, mapping map[string]string) string {
+	if mapping != nil {
+		serviceName, ok := mapping[repoName]
+		if ok {
+			return serviceName
+		}
+	}
+	return trimServiceName(repoName)
+}
+
+func trimServiceName(original string) string {
+	serviceName := strings.TrimSuffix(original, "-service")
+	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
+	return serviceName
+}
+
+func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger, metricMiddleware http.RoundTripper) error {
+	httpClient := &http.Client{Transport: metricMiddleware}
+
+	req, err := http.NewRequest("GET", endpoint, nil)
+	if err != nil {
+		return errors.Wrapf(err, "create GET request for release-manager endpoint '%s'", endpoint)
+	}
+
+	req.Header.Add("Authorization", "Bearer "+authToken)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "sending HTTP request")
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "reading release-manager HTTP response body")
+	}
+
+	if resp.StatusCode != 200 {
+		logger.Info().Msgf("Request body: %v", body)
+		return errors.Errorf("expected status code 200, but recieved " + fmt.Sprintf("%v", resp.StatusCode))
+	}
+
+	err = json.Unmarshal(body, output)
+	if err != nil {
+		return errors.Wrap(err, "parsing release-manager HTTP response body as json")
+	}
+
+	return nil
+}
+
+// Util
+func any(vs []string, f func(string) bool) bool {
+	for _, v := range vs {
+		if f(v) {
+			return true
+		}
+	}
+	return false
 }
