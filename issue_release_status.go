@@ -24,12 +24,6 @@ func any(vs []string, f func(string) bool) bool {
 	return false
 }
 
-func trimServiceName(original string) string {
-	serviceName := strings.TrimSuffix(original, "-service")
-	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
-	return serviceName
-}
-
 func retrieveFromReleaseManager(endpoint string, authToken string, output interface{}, logger zerolog.Logger, metricMiddleware http.RoundTripper) error {
 	httpClient := &http.Client{Transport: metricMiddleware}
 
@@ -112,17 +106,7 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	describeArtifactPath := handler.releaseManagerURL + "/describe/artifact/"
 
 	// Get service name
-	var serviceName string
-	if handler.repoToServiceMap != nil {
-		assignedName, ok := handler.repoToServiceMap[event.GetRepo().GetName()]
-		if ok == true {
-			serviceName = assignedName
-		} else {
-			serviceName = trimServiceName(event.GetRepo().GetName())
-		}
-	} else {
-		serviceName = trimServiceName(event.GetRepo().GetName())
-	}
+	serviceName := getServiceName(event.GetRepo().GetName(), handler.repoToServiceMap)
 
 	// Filters - Consider using Chain of Responsibility for this if it gets bloated.
 	// - Action type
@@ -193,4 +177,20 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	logger.Info().Msgf("Comment created on %s PR %d", repositoryName, *event.PullRequest.Number)
 
 	return nil
+}
+
+func getServiceName(repoName string, mapping map[string]string) string {
+	if mapping != nil {
+		serviceName, ok := mapping[repoName]
+		if ok {
+			return serviceName
+		}
+	}
+	return trimServiceName(repoName)
+}
+
+func trimServiceName(original string) string {
+	serviceName := strings.TrimSuffix(original, "-service")
+	serviceName = strings.TrimPrefix(serviceName, "lunar-way-")
+	return serviceName
 }
