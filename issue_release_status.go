@@ -66,9 +66,19 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 
 	// Filters - Consider using Chain of Responsibility for this if it gets bloated.
 	// - Action type
-	if event.GetAction() != "opened" {
+	if event.GetAction() != "opened" && event.GetAction() != "edited" {
 		logger.Info().Msgf("Filter ActionType triggered. Action: '%s'", event.GetAction())
 		return nil
+	}
+	// - Edited; but no change in base branch
+	if event.GetAction() == "edited" {
+		if event.Changes == nil {
+			logger.Info().Msg("Filter NoChanges triggered") // Check in some weeks if this state has ever been triggered 25/08/2020
+			return nil
+		} else if event.Changes.Base == nil { // to prevent nil dereference
+			logger.Info().Msg("Filter NoBaseChanges triggered")
+			return nil
+		}
 	}
 	// - Services not managed by release-manager
 	var describeArtifactResponse DescribeArtifactResponse
