@@ -17,3 +17,5 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
 )
+
+replace github.com/google/go-github/v32 => github.com/lunarway/go-github/v32 v32.1.1-0.20200825071958-1d202be51fc6
