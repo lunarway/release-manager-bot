@@ -49,7 +49,8 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 		Int64("github_installation_id", installationID).
 		Str("github_repository_owner", repository.GetOwner().GetLogin()).
 		Str("github_repository_name", repository.GetName()).
-		Int("github_pr_num", prNum)
+		Int("github_pr_num", prNum).
+		Str("github_pr_link", event.GetPullRequest().GetHTMLURL())
 
 	logger := logctx.Logger()
 	ctx = logger.WithContext(ctx)
