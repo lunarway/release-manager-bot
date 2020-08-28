@@ -1,4 +1,4 @@
-site_name: 'example-docs'
+site_name: 'release-manager-bot'
 
 nav:
   - Home: index.md
