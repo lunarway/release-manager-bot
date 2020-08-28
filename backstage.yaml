@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: release-manager-bot
+  description: Bot
+spec:
+  type: service
+  lifecycle: production
+  owner: guest
