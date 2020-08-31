@@ -4,7 +4,7 @@ metadata:
   name: release-manager-bot
   description: Bot
   annotations:
-    backstage.io/techdocs-ref: dir:./
+    backstage.io/techdocs-ref: dir:docs/
 spec:
   type: service
   lifecycle: production
