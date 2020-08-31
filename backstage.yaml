@@ -4,7 +4,7 @@ metadata:
   name: release-manager-bot
   description: Bot
   annotations:
-    backstage.io/techdocs-ref: gitbucket:https://github.com/spotify/backstage.git
+    backstage.io/techdocs-ref: 'github:https://github.com/spotify/backstage.git'
 spec:
   type: service
   lifecycle: production
