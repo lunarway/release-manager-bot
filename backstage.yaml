@@ -4,7 +4,8 @@ metadata:
   name: release-manager-bot
   description: Bot
   annotations:
-    backstage.io/techdocs-ref: 'github:https://github.com/lunarway/release-manager-bot/tree/backstage/component.git'
+    backstage.io/techdocs-ref: 'dir:.'
+    #backstage.io/techdocs-ref: 'github:https://github.com/lunarway/release-manager-bot/tree/backstage/component.git'
 spec:
   type: service
   lifecycle: production
