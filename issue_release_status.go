@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v32/github"
 	"github.com/palantir/go-githubapp/githubapp"
@@ -173,6 +174,17 @@ func retrieveFromReleaseManager(endpoint string, authToken string, output interf
 	req.Header.Add("Authorization", "Bearer "+authToken)
 
 	resp, err := httpClient.Do(req)
+	// Retry 4 times if error
+	if err != nil {
+		waitTimesSec := []int{1, 2, 5, 10}
+		for _, seconds := range waitTimesSec {
+			time.Sleep(time.Duration(seconds) * time.Second) // Sleep waitTimesSec seconds
+			resp, err = httpClient.Do(req)
+			if err == nil {
+				return nil
+			}
+		}
+	}
 	if err != nil {
 		return errors.Wrap(err, "sending HTTP request")
 	}
