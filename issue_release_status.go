@@ -176,7 +176,7 @@ func retrieveFromReleaseManager(endpoint string, authToken string, output interf
 	resp, err := httpClient.Do(req)
 	// Retry 4 times if error
 	if err != nil {
-		waitTimesSec := []int{10, 30, 120, 240}
+		waitTimesSec := []int{1, 2, 5, 10}
 		for _, seconds := range waitTimesSec {
 			time.Sleep(time.Duration(seconds) * time.Second) // Sleep waitTimesSec seconds
 			resp, err = httpClient.Do(req)
