@@ -1,10 +1,8 @@
 FROM golang:1.16.0 as builder
-
 FROM scratch
-WORKDIR /app
-
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY release-manager-bot /
 
-ENTRYPOINT [ "./release-manager-bot" ]
+ENTRYPOINT [ "/release-manager-bot" ]
+
+COPY release-manager-bot /
