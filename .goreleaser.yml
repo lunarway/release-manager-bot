@@ -6,19 +6,19 @@ builds:
     id: release-manager-bot
     main: .
     goarch:
-    - amd64
+      - amd64
     goos:
-    - darwin
-    - linux
+      - darwin
+      - linux
     env:
       - CGO_ENABLED=0
 
 dockers:
   - dockerfile: Dockerfile-goreleaser
     binaries:
-    - release-manager-bot
+      - release-manager-bot
     image_templates:
-    - "quay.io/lunarway/release-manager-bot:{{ .Tag }}"
+      - "quay.io/lunarway/release-manager-bot:{{ .Tag }}"
 
 archives:
   - id: archives
@@ -30,9 +30,8 @@ archives:
       windows: windows
       386: i386
 
-
 checksum:
-  name_template: '{{ .ProjectName }}-checksums.txt'
+  name_template: "{{ .ProjectName }}-checksums.txt"
 
 snapshot:
   name_template: "git-{{.Commit}}"
@@ -42,8 +41,4 @@ release:
   prerelease: auto
 
 changelog:
-  sort: asc
-  filters:
-    exclude:
-    - '^docs:'
-    - '^test:'
+  skip: true
