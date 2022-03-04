@@ -15,8 +15,6 @@ builds:
 
 dockers:
   - dockerfile: Dockerfile-goreleaser
-    binaries:
-      - release-manager-bot
     image_templates:
       - "quay.io/lunarway/release-manager-bot:{{ .Tag }}"
 
