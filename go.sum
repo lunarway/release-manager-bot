@@ -193,8 +193,8 @@ github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRW
 github.com/palantir/go-baseapp v0.3.1/go.mod h1:szWYw8mEiUiRFE01yLY2xmnGLjb7dkW889tch+zPs5Y=
 github.com/palantir/go-baseapp v0.4.0 h1:TmgTcZGmgOkn+lN2WR3m2AxtP4D61dDXI+G0vCTwoAw=
 github.com/palantir/go-baseapp v0.4.0/go.mod h1:yL4WaVAOzMgD0vuQfiea4TLfaeBJDnZKsoZ59OeOtaE=
-github.com/palantir/go-githubapp v0.12.0 h1:qvTX5L1+X7R41Kwk71q8HK2PeP8HglRZN6OFwQBLAbY=
-github.com/palantir/go-githubapp v0.12.0/go.mod h1:KOxhZS+Uge+c7f3tcsl0bxxx6DmkYrVskvbtoKzejqw=
+github.com/palantir/go-githubapp v0.12.1 h1:MXfue8gykIGehZtLU89S2bHTYK1V9PABcQDfjQQ9FKs=
+github.com/palantir/go-githubapp v0.12.1/go.mod h1:KOxhZS+Uge+c7f3tcsl0bxxx6DmkYrVskvbtoKzejqw=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
