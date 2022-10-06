@@ -6,7 +6,7 @@ require (
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/palantir/go-baseapp v0.4.0
-	github.com/palantir/go-githubapp v0.13.2
+	github.com/palantir/go-githubapp v0.14.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.13.0
 	github.com/rs/zerolog v1.28.0
