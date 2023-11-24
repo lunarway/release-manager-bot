@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"text/template"
 	"time"
 
 	"github.com/gregjones/httpcache"
@@ -58,7 +57,13 @@ func main() {
 		os.Exit(1)
 		return
 	}
-	_, err := template.New("flagValidation").Parse(*messageTemplate)
+
+	// Template validation, fail fast
+	_, err := BotMessage(BotMessageData{
+		Template:                *messageTemplate,
+		Branch:                  "master",
+		AutoReleaseEnvironments: []string{"dev", "prod"},
+	})
 	if err != nil {
 		logger.Error().Msgf("flag 'message-template' parsing error recieved: %v", err)
 		os.Exit(1)
