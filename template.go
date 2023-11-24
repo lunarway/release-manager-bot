@@ -20,8 +20,13 @@ func BotMessage(data BotMessageData) (string, error) {
 		return "", errors.New("template is empty")
 	}
 
+	templateFuncs := template.FuncMap{
+		"contains":   strings.Contains,
+		"replaceAll": strings.ReplaceAll,
+	}
+
 	template := template.New("test")
-	template, err := template.Parse(data.Template)
+	template, err := template.Funcs(templateFuncs).Parse(data.Template)
 	if err != nil {
 		return "", errors.Wrapf(err, "parsing template: '%s'", data.Template)
 	}
