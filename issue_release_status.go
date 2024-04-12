@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v47/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -33,9 +33,8 @@ func (handler *PRCreateHandler) Handles() []string {
 	return []string{"pull_request"}
 }
 
-// Handler
 func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryID string, payload []byte) error {
-	// Recieve webhook
+	// Receive webhook
 	var event github.PullRequestEvent
 
 	if err := json.Unmarshal(payload, &event); err != nil {
@@ -190,7 +189,7 @@ func retrieveFromReleaseManager(endpoint string, authToken string, output interf
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return errors.Wrap(err, "reading release-manager HTTP response body")
 	}
