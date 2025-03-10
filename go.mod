@@ -1,8 +1,6 @@
 module github.com/lunarway/release-manager-bot
 
-go 1.22.0
-
-toolchain go1.24.0
+go 1.24.0
 
 require (
 	github.com/google/go-github/v69 v69.2.0
