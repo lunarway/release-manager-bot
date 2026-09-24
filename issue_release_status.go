@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -133,11 +132,11 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	repositoryName := repository.GetName()
 
 	// It's intentional that it's an IssueComment. The alternative PullRequestComment is a review comment
-	newComment := github.IssueComment{
-		Body: &botMessage,
+	newComment := github.IssueCommentRequest{
+		Body: botMessage,
 	}
 
-	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, &newComment); err != nil {
+	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, newComment); err != nil {
 		return errors.Wrapf(err, "commenting on pull request, with DeliveryID '%v'", deliveryID)
 	}
 
@@ -196,7 +195,7 @@ func retrieveFromReleaseManager(endpoint string, authToken string, output interf
 
 	if resp.StatusCode != 200 {
 		logger.Info().Msgf("Request body: %v", body)
-		return errors.Errorf("expected status code 200, but recieved " + fmt.Sprintf("%v", resp.StatusCode))
+		return errors.Errorf("expected status code 200, but recieved %v", resp.StatusCode)
 	}
 
 	err = json.Unmarshal(body, output)
