@@ -195,7 +195,7 @@ func retrieveFromReleaseManager(endpoint string, authToken string, output interf
 
 	if resp.StatusCode != 200 {
 		logger.Info().Msgf("Request body: %v", body)
-		return errors.Errorf("expected status code 200, but recieved %v", resp.StatusCode)
+		return errors.Errorf("expected status code 200, but received %v", resp.StatusCode)
 	}
 
 	err = json.Unmarshal(body, output)
