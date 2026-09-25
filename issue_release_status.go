@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v92/github"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -132,11 +132,11 @@ func (handler *PRCreateHandler) Handle(ctx context.Context, eventType, deliveryI
 	repositoryName := repository.GetName()
 
 	// It's intentional that it's an IssueComment. The alternative PullRequestComment is a review comment
-	newComment := github.IssueComment{
-		Body: &botMessage,
+	newComment := github.IssueCommentRequest{
+		Body: botMessage,
 	}
 
-	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, &newComment); err != nil {
+	if _, _, err := client.Issues.CreateComment(ctx, repositoryOwner, repositoryName, prNum, newComment); err != nil {
 		return errors.Wrapf(err, "commenting on pull request, with DeliveryID '%v'", deliveryID)
 	}
 
